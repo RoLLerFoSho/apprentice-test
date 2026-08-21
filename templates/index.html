@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Residential Electrical Apprentice Screening Test – Live Grok AI Grading</title>
+<style>
+:root {
+  --bg: #0f1419;
+  --card: #1a2332;
+  --border: #2d3a4f;
+  --text: #e7ecf3;
+  --muted: #8b9bb4;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  min-height: 100vh;
+}
+.container { max-width: 860px; margin: 0 auto; padding: 24px 16px 80px; }
+header {
+  text-align: center;
+  padding: 32px 16px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+header h1 { font-size: 1.55rem; font-weight: 700; margin-bottom: 6px; }
+header p { color: var(--muted); font-size: 0.95rem; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 18px;
+}
+.card h2 { font-size: 1.15rem; margin-bottom: 14px; }
+label { display: block; font-size: 0.88rem; color: var(--muted); margin-bottom: 5px; }
+input, select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 14px;
+}
+textarea { min-height: 110px; resize: vertical; }
+.btn {
+  display: inline-block;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--border); color: var(--text); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-block { display: block; width: 100%; text-align: center; }
+.screen { display: none; }
+.screen.active { display: block; }
+.progress-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.25s;
+}
+.q-meta { font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }
+.q-text { font-size: 1.02rem; margin-bottom: 14px; white-space: pre-wrap; }
+.nav-btns { display: flex; gap: 10px; margin-top: 18px; }
+.nav-btns .btn { flex: 1; }
+.result-header {
+  text-align: center;
+  padding: 28px 16px;
+  background: var(--card);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+.level-badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 18px;
+  background: var(--accent);
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.score-card {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.score-card .label { font-size: 0.78rem; color: var(--muted); }
+.score-card .value { font-size: 1.35rem; font-weight: 700; margin-top: 4px; }
+.rec-box {
+  background: var(--bg);
+  border-left: 3px solid var(--accent);
+  padding: 12px 14px;
+  margin: 10px 0;
+  border-radius: 0 8px 8px 0;
+}
+.rec-box.warn { border-left-color: var(--warning); }
+.red-flag {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  color: #fca5a5;
+}
+ul { padding-left: 20px; }
+li { margin-bottom: 6px; }
+.year-select-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+.year-btn {
+  padding: 18px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+.year-btn:hover, .year-btn.selected {
+  border-color: var(--accent);
+  background: rgba(59,130,246,0.12);
+}
+@media (max-width: 560px) {
+  .year-select-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Residential Electrical Apprentice Screening Test</h1>
+    <p>2023 NEC Edition • Practical Field Assessment • Live Grok AI Grading</p>
+  </header>
+
+  <!-- SCREEN 0: Applicant Info + Year Selection -->
+  <div id="screen-info" class="screen active">
+    <div class="card">
+      <h2>Applicant Information</h2>
+      <label>Full Name</label>
+      <input type="text" id="name" placeholder="Your full name">
+      <label>Years of Experience Claimed</label>
+      <input type="text" id="years" placeholder="e.g. 1.5 years">
+      <label>Previous Experience / Employers (brief)</label>
+      <textarea id="experience" placeholder="Briefly describe your electrical experience..."></textarea>
+    </div>
+    <div class="card">
+      <h2>Which year level are you claiming?</h2>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:12px;">Select the apprenticeship year that matches your experience. The test will be scored against that level.</p>
+      <div class="year-select-grid">
+        <button class="year-btn" data-year="1" onclick="selectYear(1)">Year 1 Apprentice</button>
+        <button class="year-btn" data-year="2" onclick="selectYear(2)">Year 2 Apprentice</button>
+        <button class="year-btn" data-year="3" onclick="selectYear(3)">Year 3 Apprentice</button>
+        <button class="year-btn" data-year="4" onclick="selectYear(4)">Year 4 Apprentice</button>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:16px;" onclick="startTest()">Start Test</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 1: Questions -->
+  <div id="screen-test" class="screen">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="card">
+      <div class="q-meta" id="qMeta"></div>
+      <div class="q-text" id="qText"></div>
+      <textarea id="answerBox" placeholder="Type your answer here. Explain your reasoning clearly."></textarea>
+      <div class="nav-btns">
+        <button class="btn btn-secondary" id="btnPrev" onclick="prevQ()">← Previous</button>
+        <button class="btn btn-primary" id="btnNext" onclick="nextQ()">Next →</button>
+      </div>
+      <button class="btn btn-danger btn-block" style="margin-top:14px;display:none;" id="btnSubmit" onclick="submitTest()">Submit for Grok AI Grading</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Results -->
+  <div id="screen-results" class="screen">
+    <div id="resultsContent"></div>
+    <div style="text-align:center;margin-top:20px;">
+      <button class="btn btn-secondary" onclick="window.print()">Print / Save as PDF</button>
+      <button class="btn btn-secondary" onclick="downloadJSON()" style="margin-left:8px;">Download JSON</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = {
+  1: [
+    {id:"Y1-1", section:"Yes/No + Explain", text:"If you turn off a breaker, can you assume the circuit is dead without testing it?\\n\\nExplain why."},
+    {id:"Y1-2", section:"Yes/No + Explain", text:"The equipment grounding conductor (green or bare) is intended to carry normal operating current under normal conditions.\\n\\nExplain why."},
+    {id:"Y1-3", section:"Yes/No + Explain", text:"A white conductor in NM-B cable is always the neutral and can never be used as a hot.\\n\\nExplain why."},
+    {id:"Y1-4", section:"Yes/No", text:"Wire nuts (twist-on connectors) must be sized correctly for the number and size of conductors being joined. (Yes/No)"},
+    {id:"Y1-5", section:"Yes/No", text:"It is acceptable to leave a wirenut connection loose if the wires are twisted tightly first. (Yes/No)"},
+    {id:"Y1-6", section:"Yes/No", text:"A 15-ampere circuit can safely use 14 AWG copper conductors for general lighting and receptacle loads in a dwelling (assuming proper temperature rating and no special conditions). (Yes/No)"},
+    {id:"Y1-7", section:"Yes/No", text:"When installing a receptacle, the hot (ungrounded) conductor should be connected to the brass-colored terminal and the neutral to the silver-colored terminal. (Yes/No)"},
+    {id:"Y1-8", section:"Yes/No", text:"A GFCI receptacle protects people from ground-fault shock hazards. (Yes/No)"},
+    {id:"Y1-9", section:"Yes/No", text:"An AFCI primarily protects people from ground-fault shock. (Yes/No)"},
+    {id:"Y1-10", section:"Yes/No", text:"You should always verify the absence of voltage with a properly rated tester after turning off a breaker and before touching conductors. (Yes/No)"},
+    {id:"Y1-11", section:"Yes/No", text:"It is safe to work on a circuit if the homeowner says the power is off. (Yes/No)"},
+    {id:"Y1-12", section:"Yes/No", text:"Different wire sizes are used for different circuit ampacities (e.g., 14 AWG for 15 A, 12 AWG for 20 A under normal conditions). (Yes/No)"},
+    {id:"Y1-13", section:"Yes/No", text:"A device box must be large enough for the number of conductors, devices, and clamps it contains (box fill). (Yes/No)"},
+    {id:"Y1-14", section:"Yes/No", text:"NM-B cable (Romex) can be run exposed outdoors on the exterior of a house without additional protection. (Yes/No)"},
+    {id:"Y1-15", section:"Yes/No", text:"A breaker protects the conductors and equipment from overcurrent; it does not primarily protect people from shock. (Yes/No)"},
+    {id:"Y1-16", section:"Multiple Choice", text:"Which tool is the proper instrument to verify that a circuit is de-energized before working on it?\\n\\nA. Continuity tester\\nB. Non-contact voltage tester or multimeter rated for the voltage\\nC. Clamp meter only\\nD. Neon test light only"},
+    {id:"Y1-17", section:"Multiple Choice", text:"On a standard 120 V duplex receptacle, the taller slot is the:\\n\\nA. Hot\\nB. Neutral\\nC. Ground\\nD. Travelers"},
+    {id:"Y1-18", section:"Multiple Choice", text:"When stripping NM-B cable, the outer jacket should be removed carefully so that:\\n\\nA. The insulation on the individual conductors is not nicked\\nB. The ground wire is cut short\\nC. The cable can be forced into a tight box\\nD. The jacket is left long inside the box"},
+    {id:"Y1-19", section:"Multiple Choice", text:"A common residential lighting circuit is typically protected by a:\\n\\nA. 30 A breaker and 10 AWG copper\\nB. 15 A or 20 A breaker with appropriate conductor size\\nC. 50 A breaker\\nD. Fuse only"},
+    {id:"Y1-20", section:"Multiple Choice", text:"The purpose of an equipment grounding conductor is to:\\n\\nA. Carry normal load current\\nB. Provide a low-impedance path for fault current so the overcurrent device can clear the fault\\nC. Serve as a neutral\\nD. Reduce voltage drop"},
+    {id:"Y1-21", section:"Multiple Choice", text:"When connecting wires under a screw terminal on a receptacle or switch:\\n\\nA. The wire should be looped clockwise so tightening the screw pulls the wire in\\nB. The wire can be left straight under the screw\\nC. Multiple wires under one screw are always preferred\\nD. Insulation should be left under the screw head"},
+    {id:"Y1-22", section:"Multiple Choice", text:"A single-pole switch typically interrupts the:\\n\\nA. Neutral conductor\\nB. Hot (ungrounded) conductor\\nC. Equipment grounding conductor\\nD. Both hot and neutral"},
+    {id:"Y1-23", section:"Multiple Choice", text:"Before installing a new receptacle in an existing box, you should:\\n\\nA. Assume the circuit is dead\\nB. Test for voltage and identify the conductors\\nC. Immediately cut all wires\\nD. Rely on the panel schedule only"},
+    {id:"Y1-24", section:"Multiple Choice", text:"Which of the following is an unsafe condition that a Year 1 apprentice should recognize and report?\\n\\nA. Missing or damaged receptacle cover plates\\nB. Open junction boxes with exposed splices\\nC. Overloaded or double-tapped breakers\\nD. All of the above"},
+    {id:"Y1-25", section:"Multiple Choice", text:"Proper use of a voltage tester includes:\\n\\nA. Testing the tester on a known live source before and after testing the circuit\\nB. Using any tester regardless of voltage rating\\nC. Testing only once\\nD. Relying solely on a non-contact tester without confirmation"},
+    {id:"Y1-26", section:"NEC 2023", text:"According to the 2023 NEC, GFCI protection is required for receptacles in dwelling unit bathrooms.\\n\\nTrue / False (and briefly explain)"},
+    {id:"Y1-27", section:"NEC 2023", text:"AFCI protection is required for many 15- and 20-ampere 120-volt branch circuits in dwelling units under the 2023 NEC.\\n\\nTrue / False"},
+    {id:"Y1-28", section:"NEC 2023", text:"Receptacle outlets in dwelling unit habitable rooms are generally required so that no point along the floor line of any wall space is more than 6 feet from a receptacle outlet (NEC 210.52).\\n\\nTrue / False"},
+    {id:"Y1-29", section:"Field Scenario", text:"You are asked to replace a receptacle. The existing receptacle has the hot and neutral reversed (reversed polarity). What do you do? Explain your steps."},
+    {id:"Y1-30", section:"Field Scenario", text:"A homeowner complains that a bedroom light sometimes works and sometimes does not. The switch feels warm. What are possible causes and what should you do first?"},
+    {id:"Y1-31", section:"Field Scenario", text:"You open a device box and find the box is completely packed with conductors and a device, with wires jammed tightly. What is the concern and what should you do?"},
+    {id:"Y1-32", section:"Field Scenario", text:"While running NM-B cable through a wall, you notice a cable that has been stapled too tightly, crushing the cable. What is the problem and how should it be handled?"},
+    {id:"Y1-33", section:"Field Scenario", text:"You are told to turn off “the kitchen circuit.” There are multiple breakers labeled kitchen. What do you do before working?"}
+  ],
+  2: [
+    {id:"Y2-1", section:"Yes/No + Explain", text:"A multiwire branch circuit (shared neutral) requires simultaneous disconnection of the ungrounded conductors.\\n\\nExplain why."},
+    {id:"Y2-2", section:"Yes/No", text:"In a multiwire branch circuit, the neutral carries the unbalanced current under normal conditions. (Yes/No)"},
+    {id:"Y2-3", section:"Yes/No", text:"Kitchen small-appliance branch circuits in a dwelling must be 20-ampere circuits. (Yes/No)"},
+    {id:"Y2-4", section:"Yes/No", text:"All receptacles in a dwelling unit kitchen require GFCI protection under the 2023 NEC (not just those serving countertops). (Yes/No)"},
+    {id:"Y2-5", section:"Yes/No", text:"Outdoor receptacles at a dwelling generally require GFCI protection. (Yes/No)"},
+    {id:"Y2-6", section:"Yes/No", text:"A switch loop using older cable may have a white conductor re-identified as hot. (Yes/No)"},
+    {id:"Y2-7", section:"Yes/No", text:"Box fill calculations must account for all conductors, devices, clamps, and equipment grounding conductors per NEC 314.16. (Yes/No)"},
+    {id:"Y2-8", section:"Yes/No", text:"An AFCI breaker protects the entire branch circuit from the panel outward when installed at the origin. (Yes/No)"},
+    {id:"Y2-9", section:"Yes/No", text:"It is acceptable to use the equipment grounding conductor as a neutral if the neutral is open. (Yes/No)"},
+    {id:"Y2-10", section:"Yes/No", text:"Cable must be secured within a certain distance of boxes and at intervals along the run (NEC 334.30 for NM). (Yes/No)"},
+    {id:"Y2-11", section:"Yes/No", text:"A 240 V circuit for a baseboard heater uses two ungrounded conductors and typically no neutral (unless the unit requires 120 V controls). (Yes/No)"},
+    {id:"Y2-12", section:"Yes/No", text:"When troubleshooting a GFCI that keeps tripping, the first step is usually to replace the GFCI without investigation. (Yes/No)"},
+    {id:"Y2-13", section:"Yes/No", text:"Equipment grounding conductors of 6 AWG and smaller that are insulated must be green or green with yellow stripe(s). (Yes/No)"},
+    {id:"Y2-14", section:"Yes/No", text:"A 3-way switch circuit requires travelers between the switches. (Yes/No)"},
+    {id:"Y2-15", section:"Yes/No", text:"Bathroom receptacles require GFCI protection and are often on a dedicated 20 A circuit. (Yes/No)"},
+    {id:"Y2-16", section:"Multiple Choice", text:"In a properly wired multiwire branch circuit with two 120 V legs and a shared neutral, if one leg is heavily loaded and the other is lightly loaded, the neutral current is approximately:\\n\\nA. The sum of the two loads\\nB. The difference between the two loads\\nC. Always zero\\nD. Always equal to one leg"},
+    {id:"Y2-17", section:"Multiple Choice", text:"Kitchen countertop receptacles in a dwelling are generally required to be supplied by:\\n\\nA. At least two 20 A small-appliance branch circuits\\nB. One 15 A circuit\\nC. Any available circuit\\nD. Lighting circuits only"},
+    {id:"Y2-18", section:"Multiple Choice", text:"When installing a 3-way switch, the common terminal is typically connected to:\\n\\nA. The travelers\\nB. The incoming hot or the switched leg to the light (depending on location)\\nC. The ground\\nD. The neutral"},
+    {id:"Y2-19", section:"Multiple Choice", text:"A receptacle that measures approximately 120 V hot-to-ground but only a few volts or fluctuating voltage hot-to-neutral most likely has:\\n\\nA. An open neutral\\nB. An open hot\\nC. A shorted ground\\nD. Correct wiring"},
+    {id:"Y2-20", section:"Multiple Choice", text:"Outdoor receptacles and those in garages at dwellings require:\\n\\nA. GFCI protection (2023 NEC expanded voltage range applies)\\nB. Only AFCI\\nC. No special protection\\nD. 30 A circuits only"},
+    {id:"Y2-21", section:"Multiple Choice", text:"The maximum distance between receptacles along a wall in a dwelling living area is effectively governed by the rule that no point along the floor line is more than:\\n\\nA. 6 feet from a receptacle\\nB. 12 feet from a receptacle\\nC. 4 feet from a receptacle\\nD. No requirement"},
+    {id:"Y2-22", section:"Multiple Choice", text:"When calculating box fill for a device box containing a duplex receptacle, the device itself counts as:\\n\\nA. One volume allowance\\nB. Two volume allowances based on the largest conductor connected to it\\nC. Zero\\nD. Four volume allowances"},
+    {id:"Y2-23", section:"Multiple Choice", text:"NM cable must be secured within how many inches of a nonmetallic box (typical rule)?\\n\\nA. 12 inches\\nB. 8 inches\\nC. 6 inches\\nD. 24 inches"},
+    {id:"Y2-24", section:"Multiple Choice", text:"A shared neutral on a multiwire branch circuit that is opened (loose connection) can cause:\\n\\nA. Overvoltage on one leg and undervoltage on the other\\nB. No problem\\nC. Only the ground to carry current safely\\nD. The breaker to trip immediately every time"},
+    {id:"Y2-25", section:"Multiple Choice", text:"For a standard residential 120/240 V single-phase service, the voltage between the two hot legs is:\\n\\nA. 120 V\\nB. 240 V\\nC. 208 V\\nD. 277 V"},
+    {id:"Y2-26", section:"NEC 2023", text:"Under 2023 NEC 210.8(A), GFCI protection for dwelling unit kitchens applies to:\\n\\nA. Only countertop receptacles\\nB. All 125 V through 250 V receptacles in the kitchen\\nC. Only receptacles within 6 feet of the sink\\nD. None of the above"},
+    {id:"Y2-27", section:"NEC 2023", text:"2023 NEC 210.12 requires AFCI protection for 120 V, 10-, 15-, and 20-ampere branch circuits supplying outlets or devices in which dwelling areas (among others)?\\n\\nA. Only bedrooms\\nB. Kitchens, family rooms, dining rooms, living rooms, bedrooms, hallways, closets, laundry areas, and similar areas\\nC. Only bathrooms\\nD. Only outdoors"},
+    {id:"Y2-28", section:"NEC 2023", text:"Multiwire branch circuits must have a means to simultaneously disconnect all ungrounded conductors (NEC 210.4).\\n\\nTrue / False"},
+    {id:"Y2-29", section:"Field Scenario", text:"A GFCI receptacle in a bathroom keeps tripping. The homeowner says “just replace it.” What do you do and why?"},
+    {id:"Y2-30", section:"Field Scenario", text:"You are wiring a new 3-way switch setup for a hallway light. Describe the basic conductor connections at each switch and the light."},
+    {id:"Y2-31", section:"Field Scenario", text:"An existing box is too small for the number of conductors and the new device you need to install. What are your options?"},
+    {id:"Y2-32", section:"Field Scenario", text:"You find a multiwire branch circuit where the two hots are on the same phase (both on leg A). What is wrong and what is the danger?"},
+    {id:"Y2-33", section:"Field Scenario", text:"A customer wants a new outdoor receptacle for holiday lights. What protection and installation requirements apply?"}
+  ],
+  3: [
+    {id:"Y3-1", section:"Yes/No + Explain", text:"Conductor ampacity must be selected based on the temperature rating of the terminations (typically 60 °C or 75 °C columns) as well as the conductor insulation.\\n\\nExplain."},
+    {id:"Y3-2", section:"Yes/No", text:"When more than three current-carrying conductors are in a raceway or cable, ampacity adjustment (derating) is required. (Yes/No)"},
+    {id:"Y3-3", section:"Yes/No", text:"A subpanel in a dwelling requires the neutral and equipment grounding conductors to be isolated (separate bars, neutral not bonded to the enclosure). (Yes/No)"},
+    {id:"Y3-4", section:"Yes/No", text:"The neutral of a multiwire branch circuit must not be interrupted by a device (pigtail required). (Yes/No)"},
+    {id:"Y3-5", section:"Yes/No", text:"Voltage drop is a performance consideration; the NEC recommends (but does not strictly require in most cases) limiting branch-circuit voltage drop to 3 % and feeder + branch to 5 %. (Yes/No)"},
+    {id:"Y3-6", section:"Yes/No", text:"A 240 V electric dryer typically requires a 30 A circuit with 10 AWG copper. (Yes/No)"},
+    {id:"Y3-7", section:"Yes/No", text:"An electric range often requires a 40 A or 50 A circuit depending on the nameplate rating and load calculation method. (Yes/No)"},
+    {id:"Y3-8", section:"Yes/No", text:"HVAC outdoor condensing units have specific disconnect and sometimes GFCI considerations (note 2023 changes and exceptions). (Yes/No)"},
+    {id:"Y3-9", section:"Yes/No", text:"Box fill must be calculated before closing up any device or junction box. (Yes/No)"},
+    {id:"Y3-10", section:"Yes/No", text:"An open neutral on a multiwire circuit can destroy 120 V appliances by subjecting them to higher voltage. (Yes/No)"},
+    {id:"Y3-11", section:"Yes/No", text:"Equipment grounding conductors can be sized from Table 250.122 based on the overcurrent device rating. (Yes/No)"},
+    {id:"Y3-12", section:"Yes/No", text:"When a feeder is increased in size for voltage drop, the equipment grounding conductor may also need to be increased proportionally. (Yes/No)"},
+    {id:"Y3-13", section:"Yes/No", text:"A water heater (storage type) is generally considered a continuous load for sizing purposes in many jurisdictions/applications. (Yes/No)"},
+    {id:"Y3-14", section:"Yes/No", text:"It is acceptable to double-tap a breaker if the breaker is not listed for two conductors. (Yes/No)"},
+    {id:"Y3-15", section:"Yes/No", text:"Working clearances in front of a panelboard must be maintained (generally 3 ft depth, 30 in width, 6½ ft height for typical residential). (Yes/No)"},
+    {id:"Y3-16", section:"Multiple Choice", text:"A 120 V receptacle measures ~120 V hot-to-ground but only ~40–60 V hot-to-neutral. The most likely problem is:\\n\\nA. High-resistance or open neutral\\nB. Open hot\\nC. Shorted ground\\nD. Correct operation"},
+    {id:"Y3-17", section:"Multiple Choice", text:"When derating ampacity for more than three current-carrying conductors, you start with the ampacity from the appropriate temperature column and then apply the adjustment factors from Table 310.15(C)(1).\\n\\nTrue / False (explain the concept)"},
+    {id:"Y3-18", section:"Multiple Choice", text:"In a subpanel, the equipment grounding conductors terminate on the:\\n\\nA. Neutral bar\\nB. Grounding bar that is bonded to the enclosure\\nC. Either bar\\nD. Nowhere"},
+    {id:"Y3-19", section:"Multiple Choice", text:"For a typical residential electric clothes dryer, the minimum circuit ampacity and breaker size are most often:\\n\\nA. 20 A\\nB. 30 A\\nC. 50 A\\nD. 15 A"},
+    {id:"Y3-20", section:"Multiple Choice", text:"Voltage drop becomes more significant when:\\n\\nA. Conductors are long and/or loads are high\\nB. Conductors are short\\nC. Voltage is high\\nD. Only with aluminum"},
+    {id:"Y3-21", section:"Multiple Choice", text:"A feeder supplying a subpanel must have an equipment grounding conductor sized according to:\\n\\nA. The load only\\nB. Table 250.122 based on the feeder overcurrent device\\nC. The same size as the ungrounded conductors always\\nD. No EGC required"},
+    {id:"Y3-22", section:"Multiple Choice", text:"When calculating box fill, equipment grounding conductors:\\n\\nA. Count one for up to four, with additional fractions for more\\nB. Each counts fully\\nC. Never count\\nD. Count as two each"},
+    {id:"Y3-23", section:"Multiple Choice", text:"An overloaded panel with no available spaces and multiple double-tapped breakers is a:\\n\\nA. Minor issue\\nB. Serious code and safety violation requiring correction\\nC. Acceptable if the loads are light\\nD. Only a problem if the main is oversized"},
+    {id:"Y3-24", section:"Multiple Choice", text:"For most residential branch circuits, the overcurrent device must be sized no larger than the ampacity of the conductors after any adjustments.\\n\\nTrue / False"},
+    {id:"Y3-25", section:"Multiple Choice", text:"A 4-way switch is used:\\n\\nA. Alone to control a light\\nB. Between two 3-way switches to allow control from three or more locations\\nC. Only for 240 V\\nD. As a dimmer only"},
+    {id:"Y3-26", section:"NEC 2023", text:"2023 NEC 210.8 has expanded GFCI requirements. Name two locations or situations where GFCI is now more broadly required than in earlier editions."},
+    {id:"Y3-27", section:"NEC 2023", text:"AFCI protection under 210.12 applies to essentially all 120 V 15- and 20 A (and 10 A) branch circuits supplying outlets/devices in the listed dwelling areas.\\n\\nTrue / False"},
+    {id:"Y3-28", section:"NEC 2023", text:"Working space about panelboards (110.26) must remain clear. Storage of materials in front of the panel is:\\n\\nA. Acceptable\\nB. A violation\\nC. Only a problem if the panel is open\\nD. Encouraged"},
+    {id:"Y3-29", section:"Field Scenario", text:"A new mini-split (ductless) HVAC system is being installed. What circuit, disconnect, and protection considerations apply? What would make you stop and ask the journeyman?"},
+    {id:"Y3-30", section:"Field Scenario", text:"You measure voltage at a receptacle: 120 V hot-ground, 120 V neutral-ground, but 0 V hot-neutral. What is happening?"},
+    {id:"Y3-31", section:"Field Scenario", text:"An existing service panel is full. The homeowner wants to add an EV charger and a new circuit for a workshop. What issues do you identify and what is the proper course of action?"},
+    {id:"Y3-32", section:"Field Scenario", text:"A water heater is being replaced with a larger unit. How do you determine the correct circuit size and breaker?"},
+    {id:"Y3-33", section:"Field Scenario", text:"While roughing in, you notice several NM cables bundled tightly together for a long distance. What concern does this raise and what should be done?"}
+  ],
+  4: [
+    {id:"Y4-1", section:"Yes/No + Explain", text:"The grounding electrode conductor (GEC) connects the system grounded conductor / equipment grounding system to the grounding electrodes.\\n\\nExplain the difference between GEC and EGC."},
+    {id:"Y4-2", section:"Yes/No", text:"In a separately derived system (e.g., a generator with a transfer switch that switches the neutral), bonding and grounding electrode requirements change. (Yes/No)"},
+    {id:"Y4-3", section:"Yes/No", text:"EV charging equipment (NEC 625) has specific branch-circuit, disconnect, and often GFCI or other protection requirements. (Yes/No)"},
+    {id:"Y4-4", section:"Yes/No", text:"Pool and spa equipment (NEC 680) has extensive equipotential bonding and GFCI requirements. (Yes/No)"},
+    {id:"Y4-5", section:"Yes/No", text:"Service calculations for a dwelling involve general lighting, small-appliance, laundry, appliances, HVAC, etc., with demand factors applied (Article 220). (Yes/No)"},
+    {id:"Y4-6", section:"Yes/No", text:"Feeder and service conductors have different ampacity and sizing rules than branch-circuit conductors in some cases. (Yes/No)"},
+    {id:"Y4-7", section:"Yes/No", text:"Working clearances and dedicated equipment space (110.26) apply to service equipment and panelboards. (Yes/No)"},
+    {id:"Y4-8", section:"Yes/No", text:"A generator interlock or transfer switch must prevent backfeeding the utility. (Yes/No)"},
+    {id:"Y4-9", section:"Yes/No", text:"When an existing installation has clear code violations that create immediate hazards, work should stop until addressed or clarified with the journeyman/master and, if necessary, the AHJ. (Yes/No)"},
+    {id:"Y4-10", section:"Yes/No", text:"Box and conduit fill calculations become critical on larger jobs with multiple conductors. (Yes/No)"},
+    {id:"Y4-11", section:"Yes/No", text:"Temperature limitations at terminations often force the use of the 60 °C or 75 °C column even if the conductor is rated 90 °C. (Yes/No)"},
+    {id:"Y4-12", section:"Yes/No", text:"Voltage drop calculations are important for long runs to subpanels, well pumps, outbuildings, and EV chargers. (Yes/No)"},
+    {id:"Y4-13", section:"Yes/No", text:"The neutral and grounding electrode system are bonded at the service disconnecting means (normally). (Yes/No)"},
+    {id:"Y4-14", section:"Yes/No", text:"An apprentice who encounters a situation outside their knowledge or experience should stop and ask rather than guess. (Yes/No)"},
+    {id:"Y4-15", section:"Yes/No", text:"Estimating material requires understanding of box fill, cable lengths, device counts, and waste factors. (Yes/No)"},
+    {id:"Y4-16", section:"Multiple Choice", text:"The primary purpose of the grounding electrode system is to:\\n\\nA. Carry normal load current\\nB. Limit voltage imposed by lightning, line surges, and unintentional contact with higher-voltage lines, and to stabilize voltage to earth\\nC. Serve as the equipment grounding conductor\\nD. Reduce voltage drop on branch circuits"},
+    {id:"Y4-17", section:"Multiple Choice", text:"For a dwelling unit service calculation, the two small-appliance branch circuits and the laundry circuit are each calculated at:\\n\\nA. 1,500 VA\\nB. 3,000 VA total for all\\nC. Actual load only\\nD. 1,200 VA each"},
+    {id:"Y4-18", section:"Multiple Choice", text:"When sizing an equipment grounding conductor for a feeder protected by a 100 A breaker, Table 250.122 generally requires:\\n\\nA. 8 AWG copper\\nB. 6 AWG copper\\nC. 4 AWG copper\\nD. Same size as phase conductors"},
+    {id:"Y4-19", section:"Multiple Choice", text:"A transfer switch for a portable or standby generator must:\\n\\nA. Allow the generator to backfeed the utility\\nB. Prevent interconnection of the generator and utility sources\\nC. Only switch the hot conductors (never the neutral) in all cases\\nD. Be optional"},
+    {id:"Y4-20", section:"Multiple Choice", text:"EVSE (Electric Vehicle Supply Equipment) branch circuits are generally considered continuous loads, affecting sizing.\\n\\nTrue / False (explain the concept)"},
+    {id:"Y4-21", section:"Multiple Choice", text:"Equipotential bonding for pools creates a low-voltage gradient around the pool to reduce shock hazard.\\n\\nTrue / False"},
+    {id:"Y4-22", section:"Multiple Choice", text:"If a panelboard has insufficient working clearance or is blocked by storage, the correct action is:\\n\\nA. Ignore it\\nB. Note it as a violation and address before or during work\\nC. Work carefully around it\\nD. Only fix it if the customer complains"},
+    {id:"Y4-23", section:"Multiple Choice", text:"When a feeder is upsized for voltage drop, the EGC must be:\\n\\nA. Left the original size\\nB. Increased proportionally in most cases (250.122(B))\\nC. Removed\\nD. Always doubled"},
+    {id:"Y4-24", section:"Multiple Choice", text:"A strong Year 4 apprentice should be able to:\\n\\nA. Perform basic load calculations and recognize when a service or feeder upgrade is needed\\nB. Identify most common residential code violations\\nC. Troubleshoot complex multiwire and shared-neutral problems\\nD. All of the above"},
+    {id:"Y4-25", section:"Multiple Choice", text:"The best answer when you are unsure about a complex grounding, service, or pool bonding issue is:\\n\\nA. Guess and proceed\\nB. Stop and consult the journeyman or master electrician\\nC. Ask the homeowner\\nD. Look it up later after the work is done"},
+    {id:"Y4-26", section:"NEC 2023", text:"Briefly explain the expansion of GFCI requirements in 2023 NEC 210.8 for kitchens and certain appliances."},
+    {id:"Y4-27", section:"NEC 2023", text:"What is the general rule for AFCI protection in dwelling units under 2023 NEC 210.12?"},
+    {id:"Y4-28", section:"NEC 2023", text:"Working space depth in front of a typical residential 120/240 V panel (Condition 1) is generally:\\n\\nA. 3 feet\\nB. 4 feet\\nC. 2 feet\\nD. No requirement"},
+    {id:"Y4-29", section:"Field Scenario", text:"A homeowner wants to add a Level 2 EV charger (48 A continuous). The existing 200 A service appears fully loaded with HVAC, range, dryer, etc. Walk through your evaluation process and what you would recommend or escalate."},
+    {id:"Y4-30", section:"Field Scenario", text:"You are called to a house where several 120 V appliances failed after a storm and some lights are very bright while others are dim. Describe your troubleshooting approach."},
+    {id:"Y4-31", section:"Field Scenario", text:"A new swimming pool is being installed. List key electrical requirements you must be aware of (bonding, GFCI, clearances, equipotential plane, etc.) and when you would involve the journeyman."},
+    {id:"Y4-32", section:"Field Scenario", text:"An existing subpanel has the neutral bar bonded to the enclosure and EGCs landed on the neutral bar. What is wrong, what are the hazards, and how is it corrected?"},
+    {id:"Y4-33", section:"Field Scenario", text:"You discover during a remodel that the original service neutral is undersized or has a high-resistance connection at the weatherhead or meter. What are the symptoms and risks, and what is the proper response?"}
+  ]
+};
+
+let claimedYear = null;
+let currentQ = 0;
+let answers = {};
+let applicantInfo = {};
+let currentQuestions = [];
+
+function selectYear(y) {
+  claimedYear = y;
+  document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector(`.year-btn[data-year="${y}"]`).classList.add('selected');
+}
+
+function startTest() {
+  const name = document.getElementById('name').value.trim();
+  if (!name) { alert('Please enter your name.'); return; }
+  if (!claimedYear) { alert('Please select a year level.'); return; }
+
+  applicantInfo = {
+    name: name,
+    years: document.getElementById('years').value.trim(),
+    experience: document.getElementById('experience').value.trim()
+  };
+  currentQuestions = QUESTIONS[claimedYear];
+  currentQ = 0;
+  answers = {};
+
+  document.getElementById('screen-info').classList.remove('active');
+  document.getElementById('screen-test').classList.add('active');
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = currentQuestions[currentQ];
+  document.getElementById('qMeta').textContent = `Year ${claimedYear} • Question ${currentQ + 1} of ${currentQuestions.length} • ${q.section}`;
+  document.getElementById('qText').textContent = q.text;
+  document.getElementById('answerBox').value = answers[q.id] || '';
+  document.getElementById('progressFill').style.width = ((currentQ + 1) / currentQuestions.length * 100) + '%';
+
+  document.getElementById('btnPrev').style.display = currentQ === 0 ? 'none' : 'inline-block';
+  document.getElementById('btnNext').style.display = currentQ === currentQuestions.length - 1 ? 'none' : 'inline-block';
+  document.getElementById('btnSubmit').style.display = currentQ === currentQuestions.length - 1 ? 'block' : 'none';
+}
+
+function saveCurrentAnswer() {
+  const q = currentQuestions[currentQ];
+  answers[q.id] = document.getElementById('answerBox').value;
+}
+
+function nextQ() {
+  saveCurrentAnswer();
+  if (currentQ < currentQuestions.length - 1) {
+    currentQ++;
+    showQuestion();
+  }
+}
+
+function prevQ() {
+  saveCurrentAnswer();
+  if (currentQ > 0) {
+    currentQ--;
+    showQuestion();
+  }
+}
+
+function submitTest() {
+  if (!confirm('Submit the test for live Grok AI grading? You will not be able to change answers after this.')) return;
+  saveCurrentAnswer();
+
+  const answerList = currentQuestions.map(q => ({
+    id: q.id,
+    year: claimedYear,
+    section: q.section,
+    question: q.text,
+    answer: answers[q.id] || ""
+  }));
+
+  const payload = {
+    applicant: applicantInfo,
+    answers: answerList,
+    claimed_year: claimedYear
+  };
+
+  document.getElementById('screen-test').classList.remove('active');
+  document.getElementById('screen-results').classList.add('active');
+  document.getElementById('resultsContent').innerHTML = `
+    <div class="card" style="text-align:center;padding:60px 20px;">
+      <h2>Grok is evaluating your answers...</h2>
+      <p style="color:var(--muted);margin-top:12px;">This usually takes 20–60 seconds. Please do not close this page.</p>
+      <div style="margin-top:24px;font-size:2rem;">⏳</div>
+    </div>
+  `;
+
+  fetch('/api/grade', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(async res => {
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Grading request failed');
+    }
+    return res.json();
+  })
+  .then(grade => {
+    showAIResults(grade);
+  })
+  .catch(err => {
+    document.getElementById('resultsContent').innerHTML = `
+      <div class="card" style="border-color:var(--danger);">
+        <h2 style="color:var(--danger);">Grading Error</h2>
+        <p>${err.message}</p>
+        <p style="margin-top:12px;font-size:0.9rem;color:var(--muted);">Please contact the hiring manager or try again later.</p>
+        <button class="btn btn-secondary" onclick="location.reload()" style="margin-top:16px;">Start Over</button>
+      </div>
+    `;
+  });
+}
+
+function showAIResults(grade) {
+  const cat = grade.category_scores || {};
+  const strengths = (grade.strengths || []).map(s => `<li>${s}</li>`).join('');
+  const weaknesses = (grade.weaknesses || []).map(w => `<li>${w}</li>`).join('');
+  const flags = (grade.red_flags || []).map(f => `<div class="red-flag">${f}</div>`).join('');
+
+  const html = `
+    <div class="result-header">
+      <h2>${applicantInfo.name || 'Candidate'}</h2>
+      <div>Live Grok AI Evaluation Complete</div>
+      <div class="level-badge">${grade.level || '—'}</div>
+      <div style="margin-top:12px;font-size:1.1rem;">Overall Score: <strong>${grade.overall_score_percent ?? '—'}%</strong></div>
+    </div>
+
+    <div class="card">
+      <h2>Recommended Classification</h2>
+      <p><strong>Level:</strong> ${grade.level || '—'}</p>
+      <p style="margin:8px 0;">${grade.level_description || ''}</p>
+      <p><strong>Claimed Year:</strong> Year ${grade.claimed_year || claimedYear} • <strong>Match:</strong> ${grade.experience_match || '—'}</p>
+      <div class="rec-box">
+        <strong>Suggested Pay Grade Band:</strong><br>${grade.pay_grade_band || '—'}
+      </div>
+      <div class="rec-box">
+        <strong>Recommended Project Placement:</strong><br>${grade.project_placement || '—'}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Category Scores</h2>
+      <div class="score-grid">
+        <div class="score-card"><div class="label">Safety</div><div class="value">${cat.safety ?? '—'}%</div></div>
+        <div class="score-card"><div class="label">Fundamentals</div><div class="value">${cat.fundamentals ?? '—'}%</div></div>
+        <div class="score-card"><div class="label">Installation</div><div class="value">${cat.installation ?? '—'}%</div></div>
+        <div class="score-card"><div class="label">Troubleshooting</div><div class="value">${cat.troubleshooting ?? '—'}%</div></div>
+        <div class="score-card"><div class="label">NEC Knowledge</div><div class="value">${cat.nec ?? '—'}%</div></div>
+        <div class="score-card"><div class="label">Field Judgment</div><div class="value">${cat.field_judgment ?? '—'}%</div></div>
+        <div class="score-card"><div class="label">Limitations / Asking</div><div class="value">${cat.limitations ?? '—'}%</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Strengths</h2>
+      <ul>${strengths || '<li>None listed</li>'}</ul>
+    </div>
+
+    <div class="card">
+      <h2>Areas for Development</h2>
+      <ul>${weaknesses || '<li>None listed</li>'}</ul>
+    </div>
+
+    ${flags ? `<div class="card"><h2 style="color:var(--danger);">Red Flags</h2>${flags}</div>` : ''}
+
+    <div class="card">
+      <h2>Hiring Manager Summary</h2>
+      <p>${grade.summary_for_hiring_manager || '—'}</p>
+    </div>
+
+    <div class="card" style="background:#151c27;">
+      <h2>Applicant Profile</h2>
+      <p><strong>Claimed Experience:</strong> ${applicantInfo.years || '—'}</p>
+      <p><strong>Background:</strong> ${applicantInfo.experience || '—'}</p>
+      <p><strong>Graded by:</strong> ${grade._meta?.model || 'Grok'} at ${grade._meta?.graded_at || '—'}</p>
+    </div>
+  `;
+  document.getElementById('resultsContent').innerHTML = html;
+  window.scrollTo(0, 0);
+  localStorage.setItem('apprenticeTestAIResult_' + (applicantInfo.name || 'candidate'), JSON.stringify({ applicantInfo, grade, claimedYear }));
+}
+
+function downloadJSON() {
+  const data = localStorage.getItem('apprenticeTestAIResult_' + (applicantInfo.name || 'candidate'));
+  if (!data) { alert('No results found'); return; }
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Apprentice_AI_Result_${(applicantInfo.name || 'candidate').replace(/\\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
