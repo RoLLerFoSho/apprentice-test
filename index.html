@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Residential Electrical Apprentice Screening Test – Live Grok AI Grading</title>
+<style>
+:root { --bg:#0f1419; --card:#1a2332; --border:#2d3a4f; --text:#e7ecf3; --muted:#8b9bb4; --accent:#3b82f6; --danger:#ef4444; --warning:#f59e0b; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.55; min-height:100vh; }
+.container { max-width:860px; margin:0 auto; padding:24px 16px 80px; }
+header { text-align:center; padding:28px 16px 20px; border-bottom:1px solid var(--border); margin-bottom:24px; }
+header h1 { font-size:1.45rem; font-weight:700; margin-bottom:6px; }
+header p { color:var(--muted); font-size:0.92rem; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px; }
+.card h2 { font-size:1.1rem; margin-bottom:12px; }
+label { display:block; font-size:0.85rem; color:var(--muted); margin-bottom:4px; }
+input, textarea { width:100%; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:0.95rem; margin-bottom:12px; }
+textarea { min-height:90px; resize:vertical; }
+.btn { display:inline-block; padding:11px 20px; border:none; border-radius:8px; font-size:0.92rem; font-weight:600; cursor:pointer; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-secondary { background:var(--border); color:var(--text); }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-block { display:block; width:100%; text-align:center; }
+.screen { display:none; } .screen.active { display:block; }
+.progress-bar { height:6px; background:var(--border); border-radius:3px; margin-bottom:16px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--accent); transition:width 0.2s; }
+.q-meta { font-size:0.8rem; color:var(--muted); margin-bottom:8px; }
+.q-text { font-size:1rem; margin-bottom:12px; white-space:pre-wrap; }
+.nav-btns { display:flex; gap:10px; margin-top:14px; } .nav-btns .btn { flex:1; }
+.result-header { text-align:center; padding:24px 16px; background:var(--card); border-radius:12px; margin-bottom:18px; border:1px solid var(--border); }
+.level-badge { display:inline-block; margin-top:10px; padding:8px 16px; background:var(--accent); border-radius:20px; font-weight:700; }
+.score-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; margin-top:10px; }
+.score-card { background:var(--bg); border-radius:8px; padding:10px; text-align:center; }
+.score-card .label { font-size:0.75rem; color:var(--muted); }
+.score-card .value { font-size:1.25rem; font-weight:700; margin-top:2px; }
+.rec-box { background:var(--bg); border-left:3px solid var(--accent); padding:10px 12px; margin:8px 0; border-radius:0 8px 8px 0; }
+.rec-box.warn { border-left-color:var(--warning); }
+.red-flag { background:rgba(239,68,68,0.12); border:1px solid var(--danger); border-radius:8px; padding:10px 12px; margin:6px 0; color:#fca5a5; }
+ul { padding-left:18px; } li { margin-bottom:5px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Residential Electrical Apprentice Screening Test</h1>
+    <p>2023 NEC • 100 Questions • Mixed Order • Live Grok AI Grading</p>
+  </header>
+  <div id="screen-info" class="screen active">
+    <div class="card">
+      <h2>Applicant Information</h2>
+      <label>Full Name</label>
+      <input type="text" id="name" placeholder="Your full name">
+      <label>Years of Experience Claimed (optional)</label>
+      <input type="text" id="years" placeholder="e.g. 2 years">
+      <label>Previous Experience (brief)</label>
+      <textarea id="experience" placeholder="Brief description of your electrical experience..."></textarea>
+      <p style="color:var(--muted);font-size:0.85rem;">100 multiple-choice questions mixed across Code, Scenarios, Mechanical Aptitude, and People skills. The AI determines your year level, skill, mechanical aptitude, and placement — you do not choose a year.</p>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startTest()">Start Test</button>
+    </div>
+  </div>
+  <div id="screen-test" class="screen">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="card">
+      <div class="q-meta" id="qMeta"></div>
+      <div class="q-text" id="qText"></div>
+      <textarea id="answerBox" placeholder="Type A or B (or the letter of your choice)."></textarea>
+      <div class="nav-btns">
+        <button class="btn btn-secondary" id="btnPrev" onclick="prevQ()">← Previous</button>
+        <button class="btn btn-primary" id="btnNext" onclick="nextQ()">Next →</button>
+      </div>
+      <button class="btn btn-danger btn-block" style="margin-top:12px;display:none;" id="btnSubmit" onclick="submitTest()">Submit for Grok AI Grading</button>
+    </div>
+  </div>
+  <div id="screen-results" class="screen">
+    <div id="resultsContent"></div>
+    <div style="text-align:center;margin-top:18px;">
+      <button class="btn btn-secondary" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btn-secondary" onclick="downloadJSON()" style="margin-left:8px;">Download JSON</button>
+    </div>
+  </div>
+</div>
+<script>
+const QUESTIONS = [
+  {id:"S03", cat:"Scenario", text:`A receptacle with reversed polarity should be corrected and verified, not left as-is.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S02", cat:"Scenario", text:`Before working, you should verify absence of voltage with a rated tester that you have verified is working.\n\nA. True\nB. False`, type:"mc"},
+  {id:"P02", cat:"People", text:`If a journeyman directs unsafe/code-violating work, you should respectfully raise the concern and not knowingly do unsafe work.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C10", cat:"Code", text:`Working clearance depth in front of a typical residential panel (Condition 1) is generally 3 feet.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S26", cat:"Scenario", text:`An apprentice should stop and ask when a situation is beyond their knowledge.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S11", cat:"Scenario", text:`Replacing a water heater with a larger unit requires checking the nameplate and sizing the circuit correctly.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C02", cat:"Code", text:`Under 2023 NEC, kitchen GFCI generally applies to all 125–250 V receptacles in the kitchen.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M01", cat:"Mechanical", text:`When stripping NM-B, avoid nicking the insulation on the individual conductors.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C16", cat:"Code", text:`A single-pole switch should interrupt the hot (ungrounded) conductor, not the neutral.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M09", cat:"Mechanical", text:`Fishing cable through insulated exterior walls requires care to avoid damaging the vapor barrier.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M04", cat:"Mechanical", text:`A cable crushed by a staple is a damage/safety issue and should be corrected.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C11", cat:"Code", text:`In a subpanel, the neutral must be isolated from the enclosure and from EGCs.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S16", cat:"Scenario", text:`You should test your voltage tester on a known live source before and after testing the work circuit.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S17", cat:"Scenario", text:`Open junction boxes with exposed splices are an unsafe condition that should be corrected.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M03", cat:"Mechanical", text:`Wirenuts must be sized correctly for the conductors being joined.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S06", cat:"Scenario", text:`If several breakers say “kitchen,” you should identify and test to confirm the correct circuit before working.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S09", cat:"Scenario", text:`120 V hot-ground, 120 V neutral-ground, 0 V hot-neutral often indicates an open neutral path issue.\n\nA. True\nB. False`, type:"mc"},
+  {id:"P03", cat:"People", text:`Walls should not be closed over electrical work before required inspections are complete.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M07", cat:"Mechanical", text:`Sharp metal box edges that nick cable jackets can create faults and must be addressed.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C38", cat:"Code", text:`A generator transfer switch or interlock must prevent backfeeding the utility.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C31", cat:"Code", text:`A typical residential electric dryer circuit is most often 30 A with 10 AWG copper.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C22", cat:"Code", text:`On a 120/240 V single-phase service, voltage between the two hot legs is 240 V.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C33", cat:"Code", text:`More than three current-carrying conductors in a raceway generally require ampacity adjustment.\n\nA. True\nB. False`, type:"mc"},
+  {id:"P07", cat:"People", text:`Immediate hazards should be stopped and reported/addressed, not ignored.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M11", cat:"Mechanical", text:`Device boxes must be large enough for the conductors, device, and clamps (box fill).\n\nA. True\nB. False`, type:"mc"},
+  {id:"S10", cat:"Scenario", text:`A full panel with requests for EV charger and workshop circuits requires load/capacity evaluation and possible upgrade discussion.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M14", cat:"Mechanical", text:`A non-contact tester alone is always enough to prove a circuit is dead.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C27", cat:"Code", text:`A 3-way switch circuit requires travelers between the switches.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M18", cat:"Mechanical", text:`Twisting wires tightly does not replace the need for a properly sized, fully engaged wirenut.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C34", cat:"Code", text:`The neutral of a multiwire circuit should not be opened by a single-pole device (pigtail preferred).\n\nA. True\nB. False`, type:"mc"},
+  {id:"C09", cat:"Code", text:`NM cable must typically be secured within 8 inches of a nonmetallic box.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S08", cat:"Scenario", text:`Two hots of a multiwire circuit on the same phase can overload the neutral and is incorrect.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S20", cat:"Scenario", text:`A warm switch is never a concern if the light still works sometimes.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S24", cat:"Scenario", text:`A customer request to “just replace the GFCI” does not remove the need to find why it trips when possible.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M05", cat:"Mechanical", text:`If a box is too small, force the device in rather than enlarging the box or reducing fill properly.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S05", cat:"Scenario", text:`A tightly packed device box is primarily a box-fill and heat/safety concern.\n\nA. True\nB. False`, type:"mc"},
+  {id:"P09", cat:"People", text:`Pressure from a GC or customer does not justify skipping testing or inspections.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S13", cat:"Scenario", text:`A subpanel with neutral bonded to the can and EGCs on the neutral bar is incorrect and hazardous.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M16", cat:"Mechanical", text:`Re-identifying a white conductor used as a hot is required when it is used that way.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C13", cat:"Code", text:`A 15 A general lighting circuit typically uses 14 AWG copper.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C37", cat:"Code", text:`Double-tapping a breaker is acceptable even if the breaker is not listed for two conductors.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C24", cat:"Code", text:`NM-B may be run exposed outdoors on the exterior of a house without additional protection.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C40", cat:"Code", text:`A white conductor used as a hot in a switch loop should be permanently re-identified.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S01", cat:"Scenario", text:`After turning off a breaker, you may assume the circuit is dead without testing.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C19", cat:"Code", text:`A standard breaker primarily protects conductors/equipment from overcurrent, not people from shock.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S27", cat:"Scenario", text:`Documenting unsafe existing conditions protects the worker and the company.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S22", cat:"Scenario", text:`If a circuit is mislabeled, you should still test rather than trust the label alone.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S21", cat:"Scenario", text:`When troubleshooting, verifying de-energized status is more important than speed.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C08", cat:"Code", text:`A duplex receptacle counts as two volume allowances for box fill (based on largest conductor).\n\nA. True\nB. False`, type:"mc"},
+  {id:"C35", cat:"Code", text:`Box fill must be calculated before closing a device or junction box.\n\nA. True\nB. False`, type:"mc"},
+  {id:"P10", cat:"People", text:`An apprentice’s job includes recognizing limits and escalating when needed.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S07", cat:"Scenario", text:`When a bathroom GFCI keeps tripping, the first step should usually be investigation, not blind replacement.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C03", cat:"Code", text:`AFCI protection is required for many 15- and 20-amp 120 V branch circuits in dwellings under 2023 NEC.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S12", cat:"Scenario", text:`Very bright and very dim lights plus failed appliances after a storm often point to a lost/open neutral condition.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C17", cat:"Code", text:`The taller slot on a standard 120 V receptacle is the neutral.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C39", cat:"Code", text:`Dedicated equipment space above/below panelboards must be kept clear of foreign systems.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S19", cat:"Scenario", text:`Overloaded or double-tapped breakers are a serious concern.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S29", cat:"Scenario", text:`A multiwire shared neutral opened under load can create dangerous voltages on 120 V equipment.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C23", cat:"Code", text:`In a multiwire branch circuit, the neutral carries the unbalanced current under normal conditions.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S23", cat:"Scenario", text:`Correcting reversed polarity is part of proper receptacle replacement.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C25", cat:"Code", text:`It is acceptable to use the EGC as a neutral if the neutral is open.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C06", cat:"Code", text:`Kitchen small-appliance branch circuits in a dwelling must be 20 ampere.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C07", cat:"Code", text:`At least two 20 A small-appliance branch circuits are required for kitchen countertop receptacles.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S28", cat:"Scenario", text:`Using ground as neutral is never an acceptable temporary fix.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M13", cat:"Mechanical", text:`14 AWG is typically used on 15 A circuits; 12 AWG on 20 A circuits under normal conditions.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C20", cat:"Code", text:`A GFCI primarily protects people from ground-fault shock.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M10", cat:"Mechanical", text:`Leaving a wirenut loose after twisting wires is not acceptable.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S04", cat:"Scenario", text:`An intermittent light with a warm switch often indicates a possible loose/overheating connection that needs investigation.\n\nA. True\nB. False`, type:"mc"},
+  {id:"P01", cat:"People", text:`If a homeowner insists you work energized “for just a second,” you should refuse and follow safe de-energize procedures.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C21", cat:"Code", text:`An AFCI primarily protects against arcing faults that can cause fires.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C01", cat:"Code", text:`GFCI protection is required for receptacles in dwelling unit bathrooms (2023 NEC).\n\nA. True\nB. False`, type:"mc"},
+  {id:"P06", cat:"People", text:`Saying “I don’t know — I need to ask” is a positive safety trait for an apprentice.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S18", cat:"Scenario", text:`Missing receptacle covers are a safety issue that should be fixed.\n\nA. True\nB. False`, type:"mc"},
+  {id:"P04", cat:"People", text:`When explaining extra cost to fix unsafe existing wiring, stay professional and clear about the safety need.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S14", cat:"Scenario", text:`Tightly bundled NM for a long distance raises heat/derating concerns.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M20", cat:"Mechanical", text:`A 3-way circuit that fails after rewiring should be checked systematically (travelers, commons, continuity), not by random swapping.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C26", cat:"Code", text:`Bathroom receptacles require GFCI protection.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M02", cat:"Mechanical", text:`Wire under a screw terminal should be looped clockwise so tightening pulls the wire in.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M15", cat:"Mechanical", text:`Supporting NM within the required distance of boxes and at proper intervals is required.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M08", cat:"Mechanical", text:`A proper voltage tester/multimeter rated for the voltage is the right tool to verify de-energized circuits.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S25", cat:"Scenario", text:`Working clearances in front of panels must remain clear during and after work.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C30", cat:"Code", text:`Storage in the working space in front of a panel is a code violation.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C28", cat:"Code", text:`When a feeder is upsized for voltage drop, the EGC often must be increased proportionally.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M19", cat:"Mechanical", text:`Using the correct strip length and no insulation under the screw head matters for a good termination.\n\nA. True\nB. False`, type:"mc"},
+  {id:"P08", cat:"People", text:`Good communication and documentation with the lead/journeyman protect safety and the company.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C05", cat:"Code", text:`A multiwire branch circuit requires simultaneous disconnection of the ungrounded conductors.\n\nA. True\nB. False`, type:"mc"},
+  {id:"S15", cat:"Scenario", text:`It is safe to work solely because the homeowner says the power is off.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M06", cat:"Mechanical", text:`NM cable run exposed outdoors without proper protection is not permitted.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C12", cat:"Code", text:`Insulated EGCs 6 AWG and smaller must be green or green with yellow stripe(s).\n\nA. True\nB. False`, type:"mc"},
+  {id:"S30", cat:"Scenario", text:`Before energizing new work, a visual and test check for shorts/grounds is good practice.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M17", cat:"Mechanical", text:`Damaged cable jacket inside a metal box should be repaired/protected before energizing.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C14", cat:"Code", text:`A 20 A general receptacle circuit typically uses 12 AWG copper.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C18", cat:"Code", text:`An EGC provides a low-impedance path for fault current so the OCPD can clear the fault.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C29", cat:"Code", text:`EGCs are generally sized from Table 250.122 based on the overcurrent device rating.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C32", cat:"Code", text:`Conductor ampacity must consider termination temperature ratings (often 60°C or 75°C).\n\nA. True\nB. False`, type:"mc"},
+  {id:"C36", cat:"Code", text:`An open neutral on a multiwire circuit can put overvoltage on 120 V loads.\n\nA. True\nB. False`, type:"mc"},
+  {id:"P05", cat:"People", text:`If you are unsure how to do a task, stop and ask rather than guess.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C04", cat:"Code", text:`No point along the floor line of a wall in a habitable room should be more than 6 feet from a receptacle.\n\nA. True\nB. False`, type:"mc"},
+  {id:"C15", cat:"Code", text:`Outdoor receptacles at a dwelling generally require GFCI protection.\n\nA. True\nB. False`, type:"mc"},
+  {id:"M12", cat:"Mechanical", text:`Hot on a receptacle goes to the brass terminal; neutral to the silver.\n\nA. True\nB. False`, type:"mc"}
+];
+let currentQ=0, answers={}, applicantInfo={};
+function startTest(){
+  const name=document.getElementById('name').value.trim();
+  if(!name){alert('Please enter your name.');return;}
+  applicantInfo={name, years:document.getElementById('years').value.trim(), experience:document.getElementById('experience').value.trim()};
+  currentQ=0; answers={};
+  document.getElementById('screen-info').classList.remove('active');
+  document.getElementById('screen-test').classList.add('active');
+  showQuestion();
+}
+function showQuestion(){
+  const q=QUESTIONS[currentQ];
+  document.getElementById('qMeta').textContent=`Question ${currentQ+1} of ${QUESTIONS.length}`;
+  document.getElementById('qText').textContent=q.text;
+  document.getElementById('answerBox').value=answers[q.id]||'';
+  document.getElementById('progressFill').style.width=((currentQ+1)/QUESTIONS.length*100)+'%';
+  document.getElementById('btnPrev').style.display=currentQ===0?'none':'inline-block';
+  document.getElementById('btnNext').style.display=currentQ===QUESTIONS.length-1?'none':'inline-block';
+  document.getElementById('btnSubmit').style.display=currentQ===QUESTIONS.length-1?'block':'none';
+}
+function saveCurrentAnswer(){ answers[QUESTIONS[currentQ].id]=document.getElementById('answerBox').value; }
+function nextQ(){ saveCurrentAnswer(); if(currentQ<QUESTIONS.length-1){ currentQ++; showQuestion(); } }
+function prevQ(){ saveCurrentAnswer(); if(currentQ>0){ currentQ--; showQuestion(); } }
+function submitTest(){
+  if(!confirm('Submit for Grok AI grading?')) return;
+  saveCurrentAnswer();
+  const answerList=QUESTIONS.map(q=>({id:q.id, year:0, section:q.cat, question:q.text, answer:answers[q.id]||''}));
+  document.getElementById('screen-test').classList.remove('active');
+  document.getElementById('screen-results').classList.add('active');
+  document.getElementById('resultsContent').innerHTML=`<div class="card" style="text-align:center;padding:50px 20px;"><h2>Grok is evaluating your answers...</h2><p style="color:var(--muted);margin-top:10px;">100 questions — may take 45–120 seconds. Do not close this page.</p><div style="margin-top:20px;font-size:2rem;">⏳</div></div>`;
+  fetch('/api/grade',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({applicant:applicantInfo, answers:answerList, claimed_year:0})})
+  .then(async res=>{ if(!res.ok){ const e=await res.json().catch(()=>({detail:res.statusText})); throw new Error(e.detail||'Grading failed'); } return res.json(); })
+  .then(grade=>showAIResults(grade))
+  .catch(err=>{ document.getElementById('resultsContent').innerHTML=`<div class="card"><h2 style="color:var(--danger);">Grading Error</h2><p>${err.message}</p><button class="btn btn-secondary" onclick="location.reload()" style="margin-top:12px;">Start Over</button></div>`; });
+}
+function showAIResults(grade){
+  const cat=grade.category_scores||{};
+  const strengths=(grade.strengths||[]).map(s=>`<li>${s}</li>`).join('');
+  const weaknesses=(grade.weaknesses||[]).map(w=>`<li>${w}</li>`).join('');
+  const flags=(grade.red_flags||[]).map(f=>`<div class="red-flag">${f}</div>`).join('');
+  document.getElementById('resultsContent').innerHTML=`
+    <div class="result-header"><h2>${applicantInfo.name||'Candidate'}</h2><div>Live Grok AI Evaluation</div>
+      <div class="level-badge">${grade.level||'—'}</div>
+      <div style="margin-top:10px;">Overall Score: <strong>${grade.overall_score_percent??'—'}%</strong></div></div>
+    <div class="card"><h2>Level & Placement</h2>
+      <p><strong>Actual Year Level:</strong> ${grade.level||'—'}</p>
+      <p style="margin:6px 0;">${grade.level_description||''}</p>
+      <div class="rec-box"><strong>Skill Level:</strong><br>${grade.skill_level||'—'}</div>
+      <div class="rec-box"><strong>Mechanical Aptitude:</strong><br>${grade.mechanical_aptitude||'—'}</div>
+      <div class="rec-box"><strong>Pay Grade Band:</strong><br>${grade.pay_grade_band||'—'}</div>
+      <div class="rec-box"><strong>Project Placement:</strong><br>${grade.project_placement||'—'}</div>
+      ${grade.experience_mismatch_note?`<div class="rec-box warn">${grade.experience_mismatch_note}</div>`:''}</div>
+    <div class="card"><h2>Category Scores</h2><div class="score-grid">
+      <div class="score-card"><div class="label">Safety</div><div class="value">${cat.safety??'—'}%</div></div>
+      <div class="score-card"><div class="label">Fundamentals</div><div class="value">${cat.fundamentals??'—'}%</div></div>
+      <div class="score-card"><div class="label">Installation</div><div class="value">${cat.installation??'—'}%</div></div>
+      <div class="score-card"><div class="label">Troubleshooting</div><div class="value">${cat.troubleshooting??'—'}%</div></div>
+      <div class="score-card"><div class="label">NEC / Code</div><div class="value">${cat.nec??'—'}%</div></div>
+      <div class="score-card"><div class="label">Field Judgment</div><div class="value">${cat.field_judgment??'—'}%</div></div>
+      <div class="score-card"><div class="label">Limitations</div><div class="value">${cat.limitations??'—'}%</div></div>
+      <div class="score-card"><div class="label">Mechanical</div><div class="value">${cat.mechanical_aptitude??'—'}%</div></div>
+    </div></div>
+    <div class="card"><h2>Strengths</h2><ul>${strengths||'<li>None listed</li>'}</ul></div>
+    <div class="card"><h2>Areas for Development</h2><ul>${weaknesses||'<li>None listed</li>'}</ul></div>
+    ${flags?`<div class="card"><h2 style="color:var(--danger);">Red Flags</h2>${flags}</div>`:''}
+    <div class="card"><h2>Hiring Manager Summary</h2><p>${grade.summary_for_hiring_manager||'—'}</p></div>
+    <div class="card" style="background:#151c27;"><h2>Applicant Profile</h2>
+      <p><strong>Claimed Experience:</strong> ${applicantInfo.years||'Not stated'}</p>
+      <p><strong>Background:</strong> ${applicantInfo.experience||'—'}</p>
+      <p><strong>Graded by:</strong> ${grade._meta?.model||'Grok'}</p></div>`;
+  window.scrollTo(0,0);
+  localStorage.setItem('apprenticeTestAIResult_'+(applicantInfo.name||'candidate'), JSON.stringify({applicantInfo, grade}));
+}
+function downloadJSON(){
+  const data=localStorage.getItem('apprenticeTestAIResult_'+(applicantInfo.name||'candidate'));
+  if(!data){ alert('No results'); return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  a.download=`Apprentice_Result_${(applicantInfo.name||'candidate').replace(/\\s+/g,'_')}.json`; a.click();
+}
+</script>
+</body>
+</html>
