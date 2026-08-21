@@ -14,6 +14,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from fpdf import FPDF
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from io import BytesIO
 
 load_dotenv()
 
@@ -26,6 +33,9 @@ templates = Jinja2Templates(directory="templates")
 XAI_API_KEY = os.getenv("XAI_API_KEY")
 XAI_BASE_URL = "https://api.x.ai/v1"
 GROK_MODEL = os.getenv("GROK_MODEL", "grok-4.6")
+RESULTS_EMAIL_TO = os.getenv("RESULTS_EMAIL_TO", "Mark@keywestlights.com")
+GMAIL_USER = os.getenv("GMAIL_USER", "")
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
 
 
 class AnswerItem(BaseModel):
@@ -198,6 +208,157 @@ async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+
+def _safe(text, limit=500):
+    if text is None:
+        return ""
+    s = str(text).replace("\r", " ").strip()
+    # FPDF core font is latin-1; strip non-latin chars
+    s = s.encode("latin-1", errors="replace").decode("latin-1")
+    return s[:limit]
+
+
+def build_results_pdf(applicant: dict, grade: dict) -> bytes:
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "Electrical Skill-Level & Placement Assessment", ln=True)
+    pdf.set_font("Helvetica", "", 11)
+    pdf.cell(0, 8, "Key West Lights — Confidential Hiring Document", ln=True)
+    pdf.ln(4)
+
+    name = _safe(applicant.get("name", "Unknown"), 80)
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(0, 8, f"Candidate: {name}", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 6, f"Claimed experience: {_safe(applicant.get('years'), 40)}  |  Claimed level: {_safe(applicant.get('claimed'), 40)}", ln=True)
+    pdf.cell(0, 6, f"Background: {_safe(applicant.get('experience'), 120)}", ln=True)
+    pdf.cell(0, 6, f"Graded: {_safe((grade.get('_meta') or {}).get('graded_at'), 40)}  Model: {_safe((grade.get('_meta') or {}).get('model'), 30)}", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 13)
+    pdf.cell(0, 8, f"Determined Level: {_safe(grade.get('level'), 60)}", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.multi_cell(0, 5, _safe(grade.get("level_description"), 800))
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 7, f"Overall Score: {grade.get('overall_score_percent', '—')}%", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    for label, key in [
+        ("Skill level", "skill_level"),
+        ("Mechanical aptitude", "mechanical_aptitude"),
+        ("Pay grade band", "pay_grade_band"),
+        ("Project placement", "project_placement"),
+        ("Hire / train recommendation", "hire_recommendation"),
+    ]:
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(0, 6, f"{label}:", ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(0, 5, _safe(grade.get(key), 600))
+        pdf.ln(1)
+
+    if grade.get("experience_mismatch_note"):
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(0, 6, "Experience mismatch note:", ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(0, 5, _safe(grade.get("experience_mismatch_note"), 500))
+        pdf.ln(1)
+
+    cat = grade.get("category_scores") or {}
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 8, "Category Scores", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    for k, v in cat.items():
+        pdf.cell(0, 5, f"  {k}: {v}%", ln=True)
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 7, "Strengths", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    for s in (grade.get("strengths") or ["—"]):
+        pdf.multi_cell(0, 5, f"- {_safe(s, 200)}")
+    pdf.ln(1)
+
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 7, "Areas for Development", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    for w in (grade.get("weaknesses") or ["—"]):
+        pdf.multi_cell(0, 5, f"- {_safe(w, 200)}")
+    pdf.ln(1)
+
+    flags = grade.get("red_flags") or []
+    if flags:
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.cell(0, 7, "CRITICAL RED FLAGS", ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        for f in flags:
+            pdf.multi_cell(0, 5, f"! {_safe(f, 250)}")
+        pdf.ln(1)
+
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 7, "Hiring Manager Summary", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.multi_cell(0, 5, _safe(grade.get("summary_for_hiring_manager"), 1500))
+
+    pdf.ln(8)
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.multi_cell(0, 4, "Confidential — Key West Lights internal use only. Not for distribution to the candidate without management approval.")
+
+    out = BytesIO()
+    pdf.output(out)
+    return out.getvalue()
+
+
+def send_results_email(applicant: dict, grade: dict, pdf_bytes: bytes) -> str:
+    """Send PDF to RESULTS_EMAIL_TO via Gmail. Returns status message."""
+    to_addr = (RESULTS_EMAIL_TO or "").strip()
+    user = (GMAIL_USER or "").strip()
+    password = (GMAIL_APP_PASSWORD or "").strip().replace(" ", "")
+
+    if not to_addr:
+        return "Email skipped: RESULTS_EMAIL_TO not set"
+    if not user or not password:
+        return "Email skipped: GMAIL_USER or GMAIL_APP_PASSWORD not set"
+
+    name = applicant.get("name") or "Candidate"
+    level = grade.get("level") or "Unknown level"
+    score = grade.get("overall_score_percent", "—")
+
+    msg = MIMEMultipart()
+    msg["From"] = user
+    msg["To"] = to_addr
+    msg["Subject"] = f"Placement Assessment: {name} — {level} ({score}%)"
+
+    body = f"""Electrical Skill-Level & Placement Assessment results
+
+Candidate: {name}
+Level: {level}
+Overall score: {score}%
+Hire recommendation: {grade.get('hire_recommendation', '—')}
+
+PDF report attached.
+
+— Key West Lights hiring system (automated)
+"""
+    msg.attach(MIMEText(body, "plain"))
+
+    part = MIMEBase("application", "pdf")
+    part.set_payload(pdf_bytes)
+    encoders.encode_base64(part)
+    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)[:40]
+    part.add_header("Content-Disposition", "attachment", filename=f"Placement_{safe_name}.pdf")
+    msg.attach(part)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as server:
+        server.login(user, password)
+        server.sendmail(user, [to_addr], msg.as_string())
+
+    return f"Email sent to {to_addr}"
+
+
+
 @app.post("/api/grade")
 async def grade_test(payload: GradeRequest):
     print(f"GRADE request: {len(payload.answers)} answers, name={payload.applicant.get('name')}")
@@ -210,6 +371,17 @@ async def grade_test(payload: GradeRequest):
         "applicant_name": payload.applicant.get("name"),
         "claimed_year": payload.claimed_year,
     }
+
+    email_status = "not attempted"
+    try:
+        pdf_bytes = build_results_pdf(payload.applicant, result)
+        email_status = send_results_email(payload.applicant, result, pdf_bytes)
+        print(email_status)
+    except Exception as e:
+        email_status = f"Email failed: {type(e).__name__}: {e}"
+        print(email_status)
+
+    result["_meta"]["email_status"] = email_status
     return JSONResponse(content=result)
 
 
