@@ -200,6 +200,7 @@ async def home(request: Request):
 
 @app.post("/api/grade")
 async def grade_test(payload: GradeRequest):
+    print(f"GRADE request: {len(payload.answers)} answers, name={payload.applicant.get('name')}")
     user_prompt = build_user_prompt(payload.applicant, payload.answers, payload.claimed_year)
     result = await call_grok(GRADING_SYSTEM_PROMPT, user_prompt)
 
