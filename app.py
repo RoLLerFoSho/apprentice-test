@@ -47,9 +47,7 @@ You are an expert residential electrical contractor, journeyman electrician, ele
 
 You are grading a Residential Electrical Apprentice Screening Test based on the 2023 National Electrical Code (NEC).
 
-The test has four progressive levels (Year 1 through Year 4). The candidate claimed a specific year level.
-
-Your job is to evaluate whether the applicant ACTUALLY understands residential electrical work at the level they claim — not whether they memorized terms.
+IMPORTANT: The candidate did NOT choose a year level. They answered a mixed set of questions spanning Year 1 through Year 4 material. Your job is to determine their ACTUAL year level from the quality of their answers.
 
 Evaluate on these categories:
 1. Safety Judgment & Safe Work Practices (critical weight)
@@ -59,8 +57,9 @@ Evaluate on these categories:
 5. 2023 NEC Knowledge (practical application)
 6. Practical Field Judgment
 7. Understanding of Limitations / Willingness to Ask for Help
+8. Mechanical Aptitude (how they approach physical/installation problems, tool use, recognition of bad workmanship, ability to visualize and solve hands-on issues)
 
-OVERALL LEVELS (choose exactly one):
+OVERALL LEVELS (choose exactly one based on demonstrated performance):
 - Below Year 1
 - Year 1 Apprentice
 - Year 2 Apprentice
@@ -68,9 +67,12 @@ OVERALL LEVELS (choose exactly one):
 - Year 4 Apprentice
 - Ready for Journeyman-level responsibility
 
-Also recommend:
-- Pay Grade Band appropriate for a residential electrical apprentice
-- Project Placement (what type of work they can safely be assigned)
+Also provide:
+- skill_level: A short plain-English description (e.g. "Solid Year 2 with strong safety habits but weak on multiwire and subpanels")
+- mechanical_aptitude: Assessment of hands-on / mechanical problem-solving ability
+- pay_grade_band: Appropriate residential apprentice pay band
+- project_placement: What type of work they can safely be assigned right now
+- experience_mismatch_note: If they claimed experience that does not match their performance, note it clearly
 
 CRITICAL RULES:
 - Reward correct process and good safety judgment even if wording differs.
@@ -79,17 +81,19 @@ CRITICAL RULES:
 - Vague, incomplete, or dangerous answers score low.
 - Willingness to say "I don't know / I would ask the journeyman" is a POSITIVE trait for apprentices.
 - Be fair but rigorous. Safety is non-negotiable.
+- Base the year level on the highest level they can consistently perform at, not on a single correct advanced answer.
 
 Return ONLY valid JSON in exactly this structure (no markdown, no extra text):
 
 {
   "overall_score_percent": 0-100,
   "level": "one of the six levels above",
-  "level_description": "2-3 sentence explanation",
-  "claimed_year": number,
-  "experience_match": "Matches claimed level / Exceeds claimed level / Below claimed level",
+  "level_description": "2-3 sentence explanation of why this level was chosen",
+  "skill_level": "short plain-English skill description",
+  "mechanical_aptitude": "assessment of mechanical / hands-on aptitude",
   "pay_grade_band": "string",
   "project_placement": "string",
+  "experience_mismatch_note": "string or empty if none",
   "category_scores": {
     "safety": 0-100,
     "fundamentals": 0-100,
@@ -97,7 +101,8 @@ Return ONLY valid JSON in exactly this structure (no markdown, no extra text):
     "troubleshooting": 0-100,
     "nec": 0-100,
     "field_judgment": 0-100,
-    "limitations": 0-100
+    "limitations": 0-100,
+    "mechanical_aptitude": 0-100
   },
   "strengths": ["list of 3-6 specific strengths"],
   "weaknesses": ["list of 3-6 specific weaknesses or gaps"],
@@ -107,24 +112,26 @@ Return ONLY valid JSON in exactly this structure (no markdown, no extra text):
 """
 
 
+
 def build_user_prompt(applicant: dict, answers: list, claimed_year: int) -> str:
     lines = []
     lines.append("=== APPLICANT INFORMATION ===")
     lines.append(f"Name: {applicant.get('name', 'Unknown')}")
-    lines.append(f"Claimed Year Level: Year {claimed_year}")
     lines.append(f"Years of Experience Claimed: {applicant.get('years', 'N/A')}")
     lines.append(f"Previous Employers / Experience: {applicant.get('experience', 'N/A')}")
+    lines.append("")
+    lines.append("NOTE: Candidate did not select a year level. Determine their actual year level from performance.")
     lines.append("")
     lines.append("=== CANDIDATE ANSWERS ===")
     lines.append("")
 
     for a in answers:
-        lines.append(f"--- {a.id} (Year {a.year} – {a.section}) ---")
+        lines.append(f"--- {a.id} (Year {a.year} material – {a.section}) ---")
         lines.append(f"Q: {a.question}")
         lines.append(f"A: {a.answer.strip() if a.answer else '(No answer provided)'}")
         lines.append("")
 
-    lines.append("Please evaluate all answers thoroughly against the claimed year level and return the JSON result.")
+    lines.append("Evaluate all answers thoroughly. Determine the actual year level, skill level, mechanical aptitude, and placement. Return the JSON result.")
     return "\n".join(lines)
 
 
