@@ -439,14 +439,43 @@ function prevQ(){ saveCurrentAnswer(); if(currentQ>0){ currentQ--; showQuestion(
 function submitTest(){
   if(!confirm('Submit for Grok AI placement?')) return;
   saveCurrentAnswer();
-  const answerList=QUESTIONS.map(q=>({id:q.id, year:0, section:q.cat, question:q.text, answer:answers[q.id]||''}));
+  // Compact payload: short question stem only (first line), keep answers
+  const answerList=QUESTIONS.map(q=>{
+    const stem=(q.text||'').split('\n')[0].slice(0,160);
+    return {id:q.id, year:0, section:q.cat, question:stem, answer:(answers[q.id]||'').slice(0,500)};
+  });
   document.getElementById('screen-test').classList.remove('active');
   document.getElementById('screen-results').classList.add('active');
-  document.getElementById('resultsContent').innerHTML=`<div class="card" style="text-align:center;padding:50px 20px;"><h2>Grok is evaluating placement...</h2><p style="color:var(--muted);margin-top:10px;">100 questions — may take 1–3 minutes. Do not close.</p><div style="margin-top:20px;font-size:2rem;">⏳</div></div>`;
-  fetch('/api/grade',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({applicant:applicantInfo, answers:answerList, claimed_year:0})})
-  .then(async res=>{ if(!res.ok){ const e=await res.json().catch(()=>({detail:res.statusText})); throw new Error(e.detail||'Grading failed'); } return res.json(); })
+  document.getElementById('resultsContent').innerHTML=`<div class="card" style="text-align:center;padding:50px 20px;"><h2>Grok is evaluating placement...</h2><p style="color:var(--muted);margin-top:10px;">Keep this page open. Usually 1–3 minutes on mobile.</p><div style="margin-top:20px;font-size:2rem;">⏳</div></div>`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 280000); // 280s client wait
+
+  fetch('/api/grade',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({applicant:applicantInfo, answers:answerList, claimed_year:0}),
+    signal: controller.signal
+  })
+  .then(async res=>{
+    clearTimeout(timer);
+    if(!res.ok){
+      const e=await res.json().catch(()=>({detail:res.statusText}));
+      throw new Error(e.detail||('Server error '+res.status));
+    }
+    return res.json();
+  })
   .then(g=>showAIResults(g))
-  .catch(err=>{ document.getElementById('resultsContent').innerHTML=`<div class="card"><h2 style="color:var(--danger);">Grading Error</h2><p>${err.message}</p><button class="btn btn-secondary" onclick="location.reload()" style="margin-top:12px;">Start Over</button></div>`; });
+  .catch(err=>{
+    clearTimeout(timer);
+    let msg = err.name==='AbortError'
+      ? 'Request timed out on the phone/browser. Try again on Wi‑Fi, or use the desktop browser.'
+      : (err.message||'Failed to fetch');
+    if(/Failed to fetch/i.test(msg)){
+      msg = 'Network error (Failed to fetch). Common on mobile: keep the screen on, use Wi‑Fi, and try once more. If it keeps failing, open the same link on a computer.';
+    }
+    document.getElementById('resultsContent').innerHTML=`<div class="card"><h2 style="color:var(--danger);">Grading Error</h2><p>${msg}</p><button class="btn btn-secondary" onclick="location.reload()" style="margin-top:12px;">Start Over</button></div>`;
+  });
 }
 function showAIResults(grade){
   const cat=grade.category_scores||{};
