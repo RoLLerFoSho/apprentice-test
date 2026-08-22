@@ -60,6 +60,11 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
       <label>Previous Experience (brief)</label>
       <textarea id="experience" placeholder="Brief work history..."></textarea>
       <p style="color:var(--muted);font-size:0.85rem;">100 unique questions (30% MC, 20% T/F, 30% written/calc/scenario, 20% mechanical). All at once — AI determines level, strengths, placement, and hire/train fit.</p>
+      <div id="resumeBox" style="display:none;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;">
+        <p style="margin-bottom:8px;"><strong>Saved progress found.</strong> <span id="resumeDetail"></span></p>
+        <button class="btn btn-primary btn-block" onclick="resumeTest()">Resume where I left off</button>
+        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="clearDraft()">Discard saved progress</button>
+      </div>
       <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startTest()">Start Assessment</button>
       <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="startTestPrefilled()">Fill sample answers &amp; Submit (testing only)</button>
     </div>
@@ -398,7 +403,72 @@ D. Only above 60 A`, type:"mc"},
   {id:"Q099", cat:"Leadership", text:`Two electricians are arguing and work has stopped. How do you restore safety, respect, and production?`, type:"written"},
   {id:"Q100", cat:"Scenario", text:`A bathroom GFCI trips repeatedly. The customer says replace it only. What process do you follow and why?`, type:"written"}
 ];
-let currentQ=0, answers={}, applicantInfo={};
+
+const DRAFT_KEY = 'kwl_placement_draft_v1';
+
+function saveDraft() {
+  try {
+    const payload = {
+      applicantInfo,
+      answers,
+      currentQ,
+      questionTimes,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+  } catch (e) { console.warn('draft save failed', e); }
+}
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+  const box = document.getElementById('resumeBox');
+  if (box) box.style.display = 'none';
+}
+
+function checkResumeOnLoad() {
+  const d = loadDraft();
+  if (!d || !d.answers || !Object.keys(d.answers).length) return;
+  const box = document.getElementById('resumeBox');
+  const detail = document.getElementById('resumeDetail');
+  if (!box) return;
+  const n = Object.keys(d.answers).length;
+  const q = (d.currentQ || 0) + 1;
+  const name = (d.applicantInfo && d.applicantInfo.name) || 'Candidate';
+  detail.textContent = `${name} — about question ${q}, ${n} answer(s) saved.`;
+  box.style.display = 'block';
+  if (d.applicantInfo) {
+    if (d.applicantInfo.name) document.getElementById('name').value = d.applicantInfo.name;
+    if (d.applicantInfo.years) document.getElementById('years').value = d.applicantInfo.years;
+    if (d.applicantInfo.claimed) document.getElementById('claimed').value = d.applicantInfo.claimed;
+    if (d.applicantInfo.experience) document.getElementById('experience').value = d.applicantInfo.experience;
+  }
+}
+
+function resumeTest() {
+  const d = loadDraft();
+  if (!d) { alert('No saved progress'); return; }
+  applicantInfo = d.applicantInfo || {};
+  answers = d.answers || {};
+  questionTimes = d.questionTimes || {};
+  currentQ = Math.min(d.currentQ || 0, QUESTIONS.length - 1);
+  if (!applicantInfo.name) applicantInfo.name = document.getElementById('name').value.trim() || 'Candidate';
+  document.getElementById('screen-info').classList.remove('active');
+  document.getElementById('screen-test').classList.add('active');
+  showQuestion();
+}
+
+document.addEventListener('DOMContentLoaded', checkResumeOnLoad);
+
+
+let currentQ=0, answers={}, applicantInfo={}, questionTimes={}, questionShownAt=null;
 function startTestPrefilled(){
   const name=document.getElementById('name').value.trim()||'Test Candidate';
   document.getElementById('name').value=name;
@@ -419,9 +489,17 @@ function startTest(){
   if(!name){ alert('Enter name'); return; }
   applicantInfo={name, years:document.getElementById('years').value.trim(), claimed:document.getElementById('claimed').value.trim(), experience:document.getElementById('experience').value.trim()};
   currentQ=0; answers={};
+  saveDraft();
   document.getElementById('screen-info').classList.remove('active');
   document.getElementById('screen-test').classList.add('active');
   showQuestion();
+}
+function markQuestionTime(){
+  if(questionShownAt==null || !QUESTIONS[currentQ]) return;
+  const id=QUESTIONS[currentQ].id;
+  const elapsed=Math.max(0, Math.round((Date.now()-questionShownAt)/1000));
+  questionTimes[id]=(questionTimes[id]||0)+elapsed;
+  questionShownAt=null;
 }
 function showQuestion(){
   const q=QUESTIONS[currentQ];
@@ -432,17 +510,19 @@ function showQuestion(){
   document.getElementById('btnPrev').style.display=currentQ===0?'none':'inline-block';
   document.getElementById('btnNext').style.display=currentQ===QUESTIONS.length-1?'none':'inline-block';
   document.getElementById('btnSubmit').style.display=currentQ===QUESTIONS.length-1?'block':'none';
+  questionShownAt=Date.now();
 }
-function saveCurrentAnswer(){ answers[QUESTIONS[currentQ].id]=document.getElementById('answerBox').value; }
-function nextQ(){ saveCurrentAnswer(); if(currentQ<QUESTIONS.length-1){ currentQ++; showQuestion(); } }
-function prevQ(){ saveCurrentAnswer(); if(currentQ>0){ currentQ--; showQuestion(); } }
+function saveCurrentAnswer(){ answers[QUESTIONS[currentQ].id]=document.getElementById('answerBox').value; saveDraft(); }
+function nextQ(){ markQuestionTime(); saveCurrentAnswer(); if(currentQ<QUESTIONS.length-1){ currentQ++; showQuestion(); } }
+function prevQ(){ markQuestionTime(); saveCurrentAnswer(); if(currentQ>0){ currentQ--; showQuestion(); } }
 function submitTest(){
   if(!confirm('Submit for Grok AI placement?')) return;
+  markQuestionTime();
   saveCurrentAnswer();
   // Compact payload: short question stem only (first line), keep answers
   const answerList=QUESTIONS.map(q=>{
     const stem=(q.text||'').split('\n')[0].slice(0,160);
-    return {id:q.id, year:0, section:q.cat, question:stem, answer:(answers[q.id]||'').slice(0,500)};
+    return {id:q.id, year:0, section:q.cat, question:stem, answer:(answers[q.id]||'').slice(0,500), seconds:questionTimes[q.id]||0};
   });
   document.getElementById('screen-test').classList.remove('active');
   document.getElementById('screen-results').classList.add('active');
@@ -478,6 +558,7 @@ function submitTest(){
   });
 }
 function showAIResults(grade){
+  clearDraft();
   const cat=grade.category_scores||{};
   const strengths=(grade.strengths||[]).map(s=>`<li>${s}</li>`).join('');
   const weaknesses=(grade.weaknesses||[]).map(w=>`<li>${w}</li>`).join('');
