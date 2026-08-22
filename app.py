@@ -44,6 +44,7 @@ class AnswerItem(BaseModel):
     section: str
     question: str
     answer: str
+    seconds: int = 0
 
 
 class GradeRequest(BaseModel):
@@ -78,6 +79,15 @@ Also produce:
 
 CATEGORY SCORES (0-100 each):
 safety, fundamentals, nec, calculations, troubleshooting, field_judgment, leadership, mechanical_aptitude, limitations
+
+
+TIMING SIGNAL (secondary, use carefully):
+Each answer may include time spent in seconds. Use this as supporting evidence only:
+- Very fast correct answers on basic code/safety facts suggest knowledge "in the head."
+- Very long times on simple True/False or short code facts (e.g. 90+ seconds) may indicate codebook lookup or uncertainty — note this, but do not alone fail a strong written performer.
+- Calculations, scenarios, and written explanations legitimately take longer — do not penalize those for time.
+- Interruptions happen; treat timing as a soft signal, not primary scoring.
+Mention notable timing patterns in strengths/weaknesses or summary when relevant (e.g. "fast on fundamentals, slow on code facts").
 
 CRITICAL RULES:
 - Safety and neutral-vs-ground / testing-before-work are non-negotiable. Major failures here → low level and/or do-not-hire regardless of other scores.
@@ -135,7 +145,13 @@ def build_user_prompt(applicant: dict, answers: list, claimed_year: int) -> str:
         ans = (a.answer or "").strip().replace("\n", " ")[:200]
         # Keep question short for MC - first line only
         q_short = (a.question or "").split("\n")[0][:120]
-        lines.append(f"{a.id} [{a.section}] Q: {q_short} | A: {ans if ans else '(blank)'}")
+        secs = getattr(a, "seconds", 0) or 0
+        time_note = f" | time={secs}s"
+        if secs >= 90 and a.section in ("Code", "Fundamentals", "Safety"):
+            time_note += " [SLOW for fact/code — possible lookup]"
+        elif secs > 0 and secs <= 15 and a.section in ("Code", "Fundamentals", "Safety"):
+            time_note += " [FAST]"
+        lines.append(f"{a.id} [{a.section}] Q: {q_short} | A: {ans if ans else '(blank)'}{time_note}")
     lines.append("")
     lines.append("Evaluate all answers. Return ONLY the required JSON.")
     return "\n".join(lines)
