@@ -58,7 +58,7 @@ You are an expert electrical contractor, field supervisor, NEC 2023 specialist, 
 
 You are grading an INTERNAL EMPLOYEE SKILL-LEVEL & PLACEMENT ASSESSMENT.
 
-The candidate answered a mixed set of questions spanning first-year fundamentals through lead-level judgment (safety, theory, NEC, calculations, troubleshooting, mechanical aptitude, job-site judgment, and leadership). They did NOT select a year level — you must determine their actual level from performance.
+The candidate answered a mixed set of questions spanning first-year fundamentals through lead-level judgment (safety, theory, NEC, calculations, troubleshooting, mechanical aptitude, job-site judgment, and leadership). They did NOT select a year level - you must determine their actual level from performance.
 
 OVERALL LEVELS (choose exactly one):
 - Below Year 1 / Helper
@@ -74,7 +74,7 @@ Also produce:
 - mechanical_aptitude: hands-on / installation / recognition of bad workmanship
 - pay_grade_band: appropriate pay band for a residential/commercial electrical contractor
 - project_placement: what work they can safely be assigned now
-- hire_recommendation: clear recommendation — e.g. "Hire and place as Year 2; strong safety and trainable", "Hire as helper only; major gaps", "Do not hire — unsafe judgment / fundamental confusion on neutral vs ground", "Strong lead candidate; can train apprentices"
+- hire_recommendation: clear recommendation - e.g. "Hire and place as Year 2; strong safety and trainable", "Hire as helper only; major gaps", "Do not hire - unsafe judgment / fundamental confusion on neutral vs ground", "Strong lead candidate; can train apprentices"
 - experience_mismatch_note: if claimed experience does not match demonstrated ability
 
 CATEGORY SCORES (0-100 each):
@@ -84,8 +84,8 @@ safety, fundamentals, nec, calculations, troubleshooting, field_judgment, leader
 TIMING SIGNAL (secondary, use carefully):
 Each answer may include time spent in seconds. Use this as supporting evidence only:
 - Very fast correct answers on basic code/safety facts suggest knowledge "in the head."
-- Very long times on simple True/False or short code facts (e.g. 90+ seconds) may indicate codebook lookup or uncertainty — note this, but do not alone fail a strong written performer.
-- Calculations, scenarios, and written explanations legitimately take longer — do not penalize those for time.
+- Very long times on simple True/False or short code facts (e.g. 90+ seconds) may indicate codebook lookup or uncertainty - note this, but do not alone fail a strong written performer.
+- Calculations, scenarios, and written explanations legitimately take longer - do not penalize those for time.
 - Interruptions happen; treat timing as a soft signal, not primary scoring.
 Mention notable timing patterns in strengths/weaknesses or summary when relevant (e.g. "fast on fundamentals, slow on code facts").
 
@@ -148,7 +148,7 @@ def build_user_prompt(applicant: dict, answers: list, claimed_year: int) -> str:
         secs = getattr(a, "seconds", 0) or 0
         time_note = f" | time={secs}s"
         if secs >= 90 and a.section in ("Code", "Fundamentals", "Safety"):
-            time_note += " [SLOW for fact/code — possible lookup]"
+            time_note += " [SLOW for fact/code - possible lookup]"
         elif secs > 0 and secs <= 15 and a.section in ("Code", "Fundamentals", "Safety"):
             time_note += " [FAST]"
         lines.append(f"{a.id} [{a.section}] Q: {q_short} | A: {ans if ans else '(blank)'}{time_note}")
@@ -229,10 +229,26 @@ def _safe(text, limit=500):
     if text is None:
         return ""
     s = str(text).replace("\r", " ").strip()
-    # FPDF core font is latin-1; strip non-latin chars
+    # Normalize common Unicode that breaks Helvetica core fonts
+    repl = {
+        "\u2014": "-",  # em dash
+        "\u2013": "-",  # en dash
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2022": "*",
+        "\u00a0": " ",
+        "\u2026": "...",
+        "\u00b0": " deg",
+    }
+    for k, v in repl.items():
+        s = s.replace(k, v)
+    # Also replace literal chars if present
+    for a, b in [("-", "-"), ("–", "-"), ("‘", "'"), ("’", "'"), ("“", '"'), ("”", '"'), ("•", "*"), ("…", "...")]:
+        s = s.replace(a, b)
     s = s.encode("latin-1", errors="replace").decode("latin-1")
     return s[:limit]
-
 
 def build_results_pdf(applicant: dict, grade: dict) -> bytes:
     pdf = FPDF()
@@ -241,7 +257,7 @@ def build_results_pdf(applicant: dict, grade: dict) -> bytes:
     pdf.set_font("Helvetica", "B", 16)
     pdf.cell(0, 10, "Electrical Skill-Level & Placement Assessment", ln=True)
     pdf.set_font("Helvetica", "", 11)
-    pdf.cell(0, 8, "Key West Lights — Confidential Hiring Document", ln=True)
+    pdf.cell(0, 8, "Key West Lights - Confidential Hiring Document", ln=True)
     pdf.ln(4)
 
     name = _safe(applicant.get("name", "Unknown"), 80)
@@ -260,7 +276,7 @@ def build_results_pdf(applicant: dict, grade: dict) -> bytes:
     pdf.ln(2)
 
     pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 7, f"Overall Score: {grade.get('overall_score_percent', '—')}%", ln=True)
+    pdf.cell(0, 7, f"Overall Score: {grade.get('overall_score_percent', '-')}%", ln=True)
     pdf.set_font("Helvetica", "", 10)
     for label, key in [
         ("Skill level", "skill_level"),
@@ -293,14 +309,14 @@ def build_results_pdf(applicant: dict, grade: dict) -> bytes:
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(0, 7, "Strengths", ln=True)
     pdf.set_font("Helvetica", "", 10)
-    for s in (grade.get("strengths") or ["—"]):
+    for s in (grade.get("strengths") or ["-"]):
         pdf.multi_cell(0, 5, f"- {_safe(s, 200)}")
     pdf.ln(1)
 
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(0, 7, "Areas for Development", ln=True)
     pdf.set_font("Helvetica", "", 10)
-    for w in (grade.get("weaknesses") or ["—"]):
+    for w in (grade.get("weaknesses") or ["-"]):
         pdf.multi_cell(0, 5, f"- {_safe(w, 200)}")
     pdf.ln(1)
 
@@ -320,7 +336,7 @@ def build_results_pdf(applicant: dict, grade: dict) -> bytes:
 
     pdf.ln(8)
     pdf.set_font("Helvetica", "I", 8)
-    pdf.multi_cell(0, 4, "Confidential — Key West Lights internal use only. Not for distribution to the candidate without management approval.")
+    pdf.multi_cell(0, 4, "Confidential - Key West Lights internal use only. Not for distribution to the candidate without management approval.")
 
     out = BytesIO()
     pdf.output(out)
@@ -340,23 +356,23 @@ def send_results_email(applicant: dict, grade: dict, pdf_bytes: bytes) -> str:
 
     name = applicant.get("name") or "Candidate"
     level = grade.get("level") or "Unknown level"
-    score = grade.get("overall_score_percent", "—")
+    score = grade.get("overall_score_percent", "-")
 
     msg = MIMEMultipart()
     msg["From"] = user
     msg["To"] = to_addr
-    msg["Subject"] = f"Placement Assessment: {name} — {level} ({score}%)"
+    msg["Subject"] = f"Placement Assessment: {name} - {level} ({score}%)"
 
     body = f"""Electrical Skill-Level & Placement Assessment results
 
 Candidate: {name}
 Level: {level}
 Overall score: {score}%
-Hire recommendation: {grade.get('hire_recommendation', '—')}
+Hire recommendation: {grade.get('hire_recommendation', '-')}
 
 PDF report attached.
 
-— Key West Lights hiring system (automated)
+- Key West Lights hiring system (automated)
 """
     msg.attach(MIMEText(body, "plain"))
 
