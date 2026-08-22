@@ -73,11 +73,11 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
       <p style="color:var(--muted);font-size:0.85rem;">100 unique questions (30% MC, 20% T/F, 30% written/calc/scenario, 20% mechanical). All at once — AI determines level, strengths, placement, and hire/train fit.</p>
       <div id="resumeBox" style="display:none;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;">
         <p style="margin-bottom:8px;"><strong>Saved progress found.</strong> <span id="resumeDetail"></span></p>
-        <button class="btn btn-primary btn-block" onclick="resumeTest()">Resume where I left off</button>
-        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="clearAllFieldsApprentice()">Clear All Fields & Start New Test</button>
+        <button type="button" class="btn btn-primary btn-block" onclick="resumeTest()">Resume where I left off</button>
       </div>
-      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="clearAllFieldsApprentice()">Clear All Fields & Start New Test</button>
-      <button class="btn btn-secondary btn-block" style="margin-top:8px;display:none;" id="btnStartOnly" onclick="startTest()">Continue without clearing</button>
+      <button type="button" class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startTest()">Start Assessment</button>
+      <button type="button" class="btn btn-block" style="margin-top:10px;background:#dc2626;color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;cursor:pointer;" onclick="clearAllFieldsApprentice()">Clear All Fields (previous candidate)</button>
+      <p style="margin-top:10px;font-size:0.85rem;color:var(--muted);">Use <strong>Clear All Fields</strong> only when a new person sits down. Then fill in their info and click <strong>Start Assessment</strong>.</p>
       
     </div>
   </div>
@@ -489,6 +489,7 @@ function checkResumeOnLoad() {
 }
 
 function clearAllFieldsApprentice() {
+  if (!confirm('Clear all form fields and saved answers from the previous candidate?')) return;
   try {
     localStorage.removeItem(DRAFT_KEY);
     const keys = [];
@@ -514,13 +515,14 @@ function clearAllFieldsApprentice() {
   if (po) po.style.display = 'none';
   const rb = document.getElementById('resumeBox');
   if (rb) rb.style.display = 'none';
-  document.getElementById('screen-test').classList.remove('active');
+  if (document.getElementById('screen-test')) document.getElementById('screen-test').classList.remove('active');
   if (document.getElementById('screen-results')) document.getElementById('screen-results').classList.remove('active');
-  document.getElementById('screen-info').classList.add('active');
-  alert('All fields and saved answers cleared. Enter the new candidate and Start Assessment.');
+  if (document.getElementById('screen-info')) document.getElementById('screen-info').classList.add('active');
+  alert('Cleared. Enter the new candidate\'s information, then click Start Assessment.');
   window.scrollTo(0,0);
 }
 function startNewTest() { clearAllFieldsApprentice(); }
+
 
 let paused = false;
 function pauseTest() {
