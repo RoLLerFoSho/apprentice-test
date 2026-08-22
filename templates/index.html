@@ -63,9 +63,10 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
       <div id="resumeBox" style="display:none;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;">
         <p style="margin-bottom:8px;"><strong>Saved progress found.</strong> <span id="resumeDetail"></span></p>
         <button class="btn btn-primary btn-block" onclick="resumeTest()">Resume where I left off</button>
-        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="clearDraft()">Discard saved progress</button>
+        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="startNewTest()">Start New Test (clear old answers)</button>
       </div>
-      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startTest()">Start Assessment</button>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startNewTest()">Start New Test</button>
+      <button class="btn btn-secondary btn-block" style="margin-top:8px;display:none;" id="btnStartOnly" onclick="startTest()">Continue without clearing</button>
       <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="startTestPrefilled()">Fill sample answers &amp; Submit (testing only)</button>
     </div>
   </div>
@@ -75,8 +76,14 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
       <div class="q-meta" id="qMeta"></div>
       <div class="q-text" id="qText"></div>
       <textarea id="answerBox" placeholder="Answer: letter for MC/T/F, or written work for explain/calc/scenario."></textarea>
+      <div id="pauseOverlay" style="display:none;background:rgba(15,20,25,0.95);border:1px solid var(--warning);border-radius:8px;padding:20px;text-align:center;margin-bottom:12px;">
+        <p style="font-size:1.1rem;margin-bottom:8px;"><strong>Test paused</strong></p>
+        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:12px;">Timer is stopped. Take a break, then click Resume Test.</p>
+        <button class="btn btn-primary" onclick="resumeFromPause()">Resume Test</button>
+      </div>
       <div class="nav-btns">
         <button class="btn btn-secondary" id="btnPrev" onclick="prevQ()">← Previous</button>
+        <button class="btn btn-secondary" id="btnPause" onclick="pauseTest()" style="background:#92400e;">Pause</button>
         <button class="btn btn-primary" id="btnNext" onclick="nextQ()">Next →</button>
       </div>
       <button class="btn btn-danger btn-block" style="margin-top:12px;display:none;" id="btnSubmit" onclick="submitTest()">Submit for Grok AI Placement</button>
@@ -452,6 +459,43 @@ function checkResumeOnLoad() {
   }
 }
 
+function startNewTest() {
+  clearDraft();
+  answers = {};
+  questionTimes = {};
+  currentQ = 0;
+  questionShownAt = null;
+  paused = false;
+  const name = document.getElementById('name').value.trim();
+  if (!name) { alert('Enter name first'); return; }
+  applicantInfo = {
+    name,
+    years: document.getElementById('years').value.trim(),
+    claimed: document.getElementById('claimed') ? document.getElementById('claimed').value.trim() : '',
+    experience: document.getElementById('experience').value.trim()
+  };
+  document.getElementById('screen-info').classList.remove('active');
+  document.getElementById('screen-test').classList.add('active');
+  const po = document.getElementById('pauseOverlay');
+  if (po) po.style.display = 'none';
+  showQuestion();
+}
+let paused = false;
+function pauseTest() {
+  if (paused) return;
+  markQuestionTime();
+  paused = true;
+  questionShownAt = null;
+  const po = document.getElementById('pauseOverlay');
+  if (po) po.style.display = 'block';
+  saveDraft();
+}
+function resumeFromPause() {
+  paused = false;
+  const po = document.getElementById('pauseOverlay');
+  if (po) po.style.display = 'none';
+  questionShownAt = Date.now();
+}
 function resumeTest() {
   const d = loadDraft();
   if (!d) { alert('No saved progress'); return; }
@@ -510,7 +554,7 @@ function showQuestion(){
   document.getElementById('btnPrev').style.display=currentQ===0?'none':'inline-block';
   document.getElementById('btnNext').style.display=currentQ===QUESTIONS.length-1?'none':'inline-block';
   document.getElementById('btnSubmit').style.display=currentQ===QUESTIONS.length-1?'block':'none';
-  questionShownAt=Date.now();
+  if (!paused) questionShownAt=Date.now();
 }
 function saveCurrentAnswer(){ answers[QUESTIONS[currentQ].id]=document.getElementById('answerBox').value; saveDraft(); }
 function nextQ(){ markQuestionTime(); saveCurrentAnswer(); if(currentQ<QUESTIONS.length-1){ currentQ++; showQuestion(); } }
