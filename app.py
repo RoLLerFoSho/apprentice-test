@@ -225,118 +225,107 @@ async def home(request: Request):
 
 
 
-def _safe(text, limit=500):
+
+def _safe(text, limit=800):
     if text is None:
-        return ""
-    s = str(text).replace("\r", " ").strip()
-    # Normalize common Unicode that breaks Helvetica core fonts
-    repl = {
-        "\u2014": "-",  # em dash
-        "\u2013": "-",  # en dash
-        "\u2018": "'",
-        "\u2019": "'",
-        "\u201c": '"',
-        "\u201d": '"',
-        "\u2022": "*",
-        "\u00a0": " ",
-        "\u2026": "...",
-        "\u00b0": " deg",
-    }
-    for k, v in repl.items():
-        s = s.replace(k, v)
-    # Also replace literal chars if present
-    for a, b in [("-", "-"), ("–", "-"), ("‘", "'"), ("’", "'"), ("“", '"'), ("”", '"'), ("•", "*"), ("…", "...")]:
+        return "-"
+    s = str(text).replace("\r", " ").replace("\n", " ").strip()
+    if not s:
+        return "-"
+    for a, b in [("—", "-"), ("–", "-"), ("‘", "'"), ("’", "'"), ("“", '"'), ("”", '"'), ("•", "*"), ("…", "..."), ("\t", " ")]:
         s = s.replace(a, b)
     s = s.encode("latin-1", errors="replace").decode("latin-1")
+    # Break very long tokens so FPDF can wrap
+    parts = []
+    for word in s.split(" "):
+        while len(word) > 80:
+            parts.append(word[:80])
+            word = word[80:]
+        parts.append(word)
+    s = " ".join(parts)
     return s[:limit]
+
 
 def build_results_pdf(applicant: dict, grade: dict) -> bytes:
     pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_auto_page_break(auto=True, margin=18)
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 10, "Electrical Skill-Level & Placement Assessment", ln=True)
-    pdf.set_font("Helvetica", "", 11)
-    pdf.cell(0, 8, "Key West Lights - Confidential Hiring Document", ln=True)
-    pdf.ln(4)
+    usable = pdf.w - pdf.l_margin - pdf.r_margin
+    if usable < 50:
+        usable = 180
+
+    def heading(txt, size=14):
+        pdf.set_font("Helvetica", "B", size)
+        pdf.multi_cell(usable, 8, _safe(txt, 120))
+        pdf.ln(1)
+
+    def label_value(label, value, size=10):
+        pdf.set_font("Helvetica", "B", size)
+        pdf.multi_cell(usable, 6, _safe(label, 80))
+        pdf.set_font("Helvetica", "", size)
+        pdf.multi_cell(usable, 5, _safe(value, 900))
+        pdf.ln(1)
+
+    def bullet_list(items, size=10):
+        pdf.set_font("Helvetica", "", size)
+        if not items:
+            pdf.multi_cell(usable, 5, "-")
+            return
+        for item in items:
+            pdf.multi_cell(usable, 5, "- " + _safe(item, 250))
+        pdf.ln(1)
+
+    heading("Electrical Assessment - Placement Report", 15)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.multi_cell(usable, 6, "Key West Lights - Confidential Hiring Document")
+    pdf.ln(3)
 
     name = _safe(applicant.get("name", "Unknown"), 80)
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 8, f"Candidate: {name}", ln=True)
+    heading("Candidate: " + name, 12)
     pdf.set_font("Helvetica", "", 10)
-    pdf.cell(0, 6, f"Claimed experience: {_safe(applicant.get('years'), 40)}  |  Claimed level: {_safe(applicant.get('claimed'), 40)}", ln=True)
-    pdf.cell(0, 6, f"Background: {_safe(applicant.get('experience'), 120)}", ln=True)
-    pdf.cell(0, 6, f"Graded: {_safe((grade.get('_meta') or {}).get('graded_at'), 40)}  Model: {_safe((grade.get('_meta') or {}).get('model'), 30)}", ln=True)
-    pdf.ln(4)
-
-    pdf.set_font("Helvetica", "B", 13)
-    pdf.cell(0, 8, f"Determined Level: {_safe(grade.get('level'), 60)}", ln=True)
-    pdf.set_font("Helvetica", "", 10)
-    pdf.multi_cell(0, 5, _safe(grade.get("level_description"), 800))
+    pdf.multi_cell(usable, 5, _safe(
+        f"Experience: {applicant.get('years', '-')} | Res: {applicant.get('resYears', applicant.get('years', '-'))} | Com: {applicant.get('comYears', '-')}",
+        200))
+    pdf.multi_cell(usable, 5, _safe(f"Largest project: {applicant.get('largestProject', '-')}", 200))
+    pdf.multi_cell(usable, 5, _safe(f"Largest crew: {applicant.get('largestCrew', '-')} | J-Card: {applicant.get('jcard', '-')}", 200))
     pdf.ln(2)
 
-    pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 7, f"Overall Score: {grade.get('overall_score_percent', '-')}%", ln=True)
-    pdf.set_font("Helvetica", "", 10)
-    for label, key in [
-        ("Skill level", "skill_level"),
-        ("Mechanical aptitude", "mechanical_aptitude"),
-        ("Pay grade band", "pay_grade_band"),
-        ("Project placement", "project_placement"),
-        ("Hire / train recommendation", "hire_recommendation"),
-    ]:
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(0, 6, f"{label}:", ln=True)
-        pdf.set_font("Helvetica", "", 10)
-        pdf.multi_cell(0, 5, _safe(grade.get(key), 600))
-        pdf.ln(1)
-
+    heading("Level: " + _safe(grade.get("level"), 60), 13)
+    label_value("Level description", grade.get("level_description") or "-")
+    label_value("Overall score", f"{grade.get('overall_score_percent', '-')}%")
+    label_value("Skill / strong suits", grade.get("skill_level") or "-")
+    label_value("Mechanical aptitude", grade.get("mechanical_aptitude") or "-")
+    label_value("Pay grade band", grade.get("pay_grade_band") or "-")
+    label_value("Project placement", grade.get("project_placement") or "-")
+    label_value("Hire recommendation", grade.get("hire_recommendation") or "-")
     if grade.get("experience_mismatch_note"):
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(0, 6, "Experience mismatch note:", ln=True)
-        pdf.set_font("Helvetica", "", 10)
-        pdf.multi_cell(0, 5, _safe(grade.get("experience_mismatch_note"), 500))
-        pdf.ln(1)
+        label_value("Experience mismatch", grade.get("experience_mismatch_note"))
 
+    heading("Category Scores", 12)
     cat = grade.get("category_scores") or {}
-    pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 8, "Category Scores", ln=True)
     pdf.set_font("Helvetica", "", 10)
-    for k, v in cat.items():
-        pdf.cell(0, 5, f"  {k}: {v}%", ln=True)
+    if cat:
+        for k, v in cat.items():
+            pdf.multi_cell(usable, 5, _safe(f"{k}: {v}%", 80))
+    else:
+        pdf.multi_cell(usable, 5, "-")
     pdf.ln(2)
 
-    pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 7, "Strengths", ln=True)
-    pdf.set_font("Helvetica", "", 10)
-    for s in (grade.get("strengths") or ["-"]):
-        pdf.multi_cell(0, 5, f"- {_safe(s, 200)}")
-    pdf.ln(1)
-
-    pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 7, "Areas for Development", ln=True)
-    pdf.set_font("Helvetica", "", 10)
-    for w in (grade.get("weaknesses") or ["-"]):
-        pdf.multi_cell(0, 5, f"- {_safe(w, 200)}")
-    pdf.ln(1)
-
+    heading("Strengths", 12)
+    bullet_list(grade.get("strengths") or [])
+    heading("Weaknesses", 12)
+    bullet_list(grade.get("weaknesses") or [])
     flags = grade.get("red_flags") or []
     if flags:
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(0, 7, "CRITICAL RED FLAGS", ln=True)
-        pdf.set_font("Helvetica", "", 10)
-        for f in flags:
-            pdf.multi_cell(0, 5, f"! {_safe(f, 250)}")
-        pdf.ln(1)
+        heading("RED FLAGS", 12)
+        bullet_list(flags)
 
-    pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 7, "Hiring Manager Summary", ln=True)
-    pdf.set_font("Helvetica", "", 10)
-    pdf.multi_cell(0, 5, _safe(grade.get("summary_for_hiring_manager"), 1500))
+    heading("Hiring Manager Summary", 12)
+    label_value("Summary", grade.get("summary_for_hiring_manager") or "-")
 
-    pdf.ln(8)
+    pdf.ln(4)
     pdf.set_font("Helvetica", "I", 8)
-    pdf.multi_cell(0, 4, "Confidential - Key West Lights internal use only. Not for distribution to the candidate without management approval.")
+    pdf.multi_cell(usable, 4, "Confidential - Key West Lights internal use only.")
 
     out = BytesIO()
     pdf.output(out)
