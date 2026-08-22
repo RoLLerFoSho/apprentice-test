@@ -63,11 +63,11 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
       <div id="resumeBox" style="display:none;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;">
         <p style="margin-bottom:8px;"><strong>Saved progress found.</strong> <span id="resumeDetail"></span></p>
         <button class="btn btn-primary btn-block" onclick="resumeTest()">Resume where I left off</button>
-        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="startNewTest()">Start New Test (clear old answers)</button>
+        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="startNewTest()">Start New Test (clear saved answers)</button>
       </div>
-      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startNewTest()">Start New Test</button>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startNewTest()">Start New Test (clear saved answers)</button>
       <button class="btn btn-secondary btn-block" style="margin-top:8px;display:none;" id="btnStartOnly" onclick="startTest()">Continue without clearing</button>
-      <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="startTestPrefilled()">Fill sample answers &amp; Submit (testing only)</button>
+      
     </div>
   </div>
   <div id="screen-test" class="screen">
@@ -435,7 +435,18 @@ function loadDraft() {
 }
 
 function clearDraft() {
-  localStorage.removeItem(DRAFT_KEY);
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('kwl_') === 0) toRemove.push(k);
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
+  answers = {};
+  questionTimes = {};
+  currentQ = 0;
   const box = document.getElementById('resumeBox');
   if (box) box.style.display = 'none';
 }
@@ -513,21 +524,7 @@ document.addEventListener('DOMContentLoaded', checkResumeOnLoad);
 
 
 let currentQ=0, answers={}, applicantInfo={}, questionTimes={}, questionShownAt=null;
-function startTestPrefilled(){
-  const name=document.getElementById('name').value.trim()||'Test Candidate';
-  document.getElementById('name').value=name;
-  applicantInfo={name, years:document.getElementById('years').value.trim()||'2', claimed:document.getElementById('claimed').value.trim()||'', experience:document.getElementById('experience').value.trim()||'Test'};
-  answers={};
-  QUESTIONS.forEach(q=>{
-    if(q.type==='mc'||q.type==='tf') answers[q.id]='B';
-    else answers[q.id]='I would verify with proper testing, apply the NEC, and ask the journeyman if unsure.';
-  });
-  currentQ=QUESTIONS.length-1;
-  document.getElementById('screen-info').classList.remove('active');
-  document.getElementById('screen-test').classList.add('active');
-  showQuestion();
-  alert('Sample answers filled. Click Submit to test grading.');
-}
+function startTestPrefilled(){ alert("Sample fill disabled."); }
 function startTest(){
   const name=document.getElementById('name').value.trim();
   if(!name){ alert('Enter name'); return; }
