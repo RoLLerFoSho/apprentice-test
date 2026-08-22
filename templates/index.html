@@ -92,316 +92,316 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
 </div>
 <script>
 const QUESTIONS = [
-  {id:"Q001", cat:"Mechanical", text:`A device box is overfilled. What are acceptable field options to correct box fill before energizing?`, type:"written"},
-  {id:"Q002", cat:"Leadership", text:`As lead on a commercial buildout (5 electricians, 2 apprentices), walls not fully framed, drawings available — outline first-day priorities (safety, layout, manpower, materials, coordination).`, type:"written"},
-  {id:"Q003", cat:"Calculation", text:`A 120 V resistive load draws 12 A. Calculate resistance. Show formula (Ohm’s Law) and numerical answer.`, type:"written"},
-  {id:"Q004", cat:"Scenario", text:`After a storm, some lights are very bright, others dim, and 120 V appliances have failed. What condition do you suspect and how do you approach diagnosis safely?`, type:"written"},
-  {id:"Q005", cat:"Calculation", text:`A transformer is 480 V primary, 120/240 V secondary, 10 kVA load on the secondary. Approximate primary current (ignore losses). Show relationship.`, type:"written"},
-  {id:"Q006", cat:"Judgment", text:`Production pressure from a GC justifies skipping required testing or inspections.
+  {id:"Q001", cat:"Code", text:`Grounding electrode conductor and equipment grounding conductor mean the same thing and can be used interchangeably.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q007", cat:"Code", text:`Box fill must account for conductors, devices, clamps, and equipment grounding conductors per the applicable fill rules.
+  {id:"Q002", cat:"Fundamentals", text:`Voltage drop depends only on how long the wire is, not on current or wire size.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q008", cat:"Mechanical", text:`Outline a systematic method to diagnose a 3-way switch circuit that does not work after rewiring (travelers, commons, without random wire swapping).`, type:"written"},
-  {id:"Q009", cat:"Judgment", text:`An apprentice wants to perform a task beyond their ability with real risk. How do you handle it as the responsible person?`, type:"written"},
-  {id:"Q010", cat:"Calculation", text:`Estimate voltage drop for a 120 V circuit with a 16 A load, 200 ft one-way, copper. State assumed ohms per 1000 ft, show round-trip calculation, and percent of 120 V.`, type:"written"},
-  {id:"Q011", cat:"Mechanical", text:`A switch feels warm and the controlled light is intermittent. What mechanical/electrical connection issues do you look for first at the switch and in the box?`, type:"written"},
-  {id:"Q012", cat:"Mechanical", text:`Crushing NM cable with a staple is acceptable if a continuity test still passes.
+  {id:"Q003", cat:"Mechanical", text:`Why is it wrong to force a device into a box that is too small? What failures can that cause?`, type:"written"},
+  {id:"Q004", cat:"Fundamentals", text:`A single-pole light switch should open which conductor?
+
+A. The neutral
+B. The equipment grounding conductor
+C. The hot (ungrounded) conductor
+D. Both hot and neutral together`, type:"mc"},
+  {id:"Q005", cat:"Application", text:`A customer wants a bigger breaker because the old one trips. Explain why changing the breaker size first is usually wrong, and what you should check instead.`, type:"written"},
+  {id:"Q006", cat:"Fundamentals", text:`In plain language: What is the difference between the neutral (grounded conductor) and the equipment grounding conductor? When does each one carry current in normal use, and when during a fault?`, type:"written"},
+  {id:"Q007", cat:"Code", text:`Why must a multiwire branch circuit disconnect all ungrounded conductors together?
+
+A. To reduce voltage drop on the neutral
+B. So one leg cannot stay live while someone works on the other leg through the shared neutral
+C. Because the NEC requires 3-pole breakers on all residential circuits
+D. To allow a smaller equipment grounding conductor`, type:"mc"},
+  {id:"Q008", cat:"Judgment", text:`You find a serious wiring mistake another electrician is trying to hide before inspection. What do you do?`, type:"written"},
+  {id:"Q009", cat:"Application", text:`A plug-in outlet tester shows correct wiring. What does that actually prove?
+
+A. The circuit can safely run any continuous load
+B. Basic polarity and ground path under the tester's limited checks, not full load capacity
+C. That AFCI protection is working
+D. That voltage drop is under 3 percent`, type:"mc"},
+  {id:"Q010", cat:"Application", text:`A wire shows good continuity from end to end. Why is that not enough to say the wire is good under full load?`, type:"written"},
+  {id:"Q011", cat:"Leadership", text:`The architectural drawing shows a wall that is missing on the electrical drawing. How do you handle that conflict?`, type:"written"},
+  {id:"Q012", cat:"Code", text:`How close to a nonmetallic box must NM cable typically be secured?
+
+A. Within 6 inches
+B. Within 8 inches
+C. Within 12 inches
+D. Within 24 inches`, type:"mc"},
+  {id:"Q013", cat:"Scenario", text:`At a receptacle you measure about 120 V from hot to ground and about 120 V from neutral to ground, but about 0 V from hot to neutral. What does that usually mean, and what is the next safe step?`, type:"written"},
+  {id:"Q014", cat:"Scenario", text:`You open a panel and see both hots of a multiwire branch circuit on the same phase bus (same leg). What is wrong, and what can happen to the neutral?`, type:"written"},
+  {id:"Q015", cat:"Leadership", text:`You are the lead on a commercial job with five electricians and two apprentices. Drawings are ready but some walls are not framed yet. List your first-day priorities in order (safety, layout, people, material, other trades).`, type:"written"},
+  {id:"Q016", cat:"Mechanical", text:`When you tighten a screw terminal, the loop of wire should be made so the screw tends to pull the wire in, not push it out.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q013", cat:"Calculation", text:`A balanced three-phase 480 V load is 25 kW at 0.85 power factor. Calculate approximate line current. Show formula and work.`, type:"written"},
-  {id:"Q014", cat:"Application", text:`A continuity reading from end to end on a conductor proves:
-
-A. The conductor will perform under full load without excess resistance or damage
-B. There is a continuous path for the test current — not full proof under load
-C. Insulation is undamaged
-D. Ampacity is correct`, type:"mc"},
-  {id:"Q015", cat:"Code", text:`Small-appliance branch circuits serving kitchen countertops in a dwelling are generally required to be:
-
-A. 15 A
-B. 20 A
-C. 30 A
-D. Any size if GFCI protected`, type:"mc"},
-  {id:"Q016", cat:"Code", text:`In a subpanel, the neutral should remain bonded to the enclosure the same way as at the service.
+  {id:"Q017", cat:"Fundamentals", text:`In a series circuit the current is the same through each part; in a parallel circuit the voltage is the same across each branch.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q017", cat:"Application", text:`Upsizing a breaker solely because it trips under load, without investigating the cause, is:
+  {id:"Q018", cat:"Mechanical", text:`How do you prove your voltage tester works before and after you test a circuit that should be dead? Why do both checks?`, type:"written"},
+  {id:"Q019", cat:"Scenario", text:`You are told to shut off "the kitchen circuit," but three breakers are labeled kitchen. What do you do before you touch any wires?`, type:"written"},
+  {id:"Q020", cat:"Mechanical", text:`It is acceptable to leave NM cable crushed under a staple if a continuity test still passes.
 
-A. Standard practice
-B. Generally incorrect and potentially unsafe
-C. Required by the NEC
-D. Acceptable if the wire is #10`, type:"mc"},
-  {id:"Q018", cat:"Fundamentals", text:`A single-pole switch should interrupt the:
+A. True
+B. False`, type:"tf"},
+  {id:"Q021", cat:"Safety", text:`After turning a breaker off, you can start work without testing for voltage if the panel label is clear and the homeowner says power is off.
 
-A. Neutral only
-B. Hot (ungrounded) conductor
-C. Equipment grounding conductor
-D. Both hot and neutral`, type:"mc"},
-  {id:"Q019", cat:"Scenario", text:`A subpanel has the neutral bonded to the can and EGCs on the neutral bar. Explain the problem, hazards, and correct configuration.`, type:"written"},
-  {id:"Q020", cat:"Code", text:`NM cable support distance from a nonmetallic box is typically within:
+A. True
+B. False`, type:"tf"},
+  {id:"Q022", cat:"Fundamentals", text:`For a simple resistive load, power in watts is often calculated as:
 
-A. 6 inches
-B. 8 inches
-C. 12 inches
-D. 24 inches`, type:"mc"},
-  {id:"Q021", cat:"Leadership", text:`Architectural plans show a wall missing from the electrical drawings. How do you handle the discrepancy?`, type:"written"},
-  {id:"Q022", cat:"Fundamentals", text:`Power (watts) for a simple DC or resistive circuit is often calculated as:
-
-A. P = V × I
+A. P = V x I
 B. P = V / I
 C. P = V + I
 D. P = I / V`, type:"mc"},
-  {id:"Q023", cat:"Judgment", text:`Saying “I don’t know — I need to ask or look it up” is a professional weakness for an apprentice.
+  {id:"Q023", cat:"Fundamentals", text:`A white wire is always the neutral and can never be re-identified and used as a hot in any situation.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q024", cat:"Fundamentals", text:`In series circuits, current is the same through each element; in parallel, voltage across parallel branches is the same.
+  {id:"Q024", cat:"Mechanical", text:`Voltage is normal with no load but drops when a load is applied. How would you hunt for a high-resistance connection?`, type:"written"},
+  {id:"Q025", cat:"Mechanical", text:`Describe how you strip NM-B cable so you do not nick the insulation on the black, white, or ground wires. Why is a nick a problem even if the circuit works at first?`, type:"written"},
+  {id:"Q026", cat:"Code", text:`Box-fill rules require counting conductors, devices, clamps, and equipment grounding conductors as the code requires.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q025", cat:"Mechanical", text:`Metal box knockout edges have nicked the cable jacket. What is the risk and how do you correct/prevent it?`, type:"written"},
-  {id:"Q026", cat:"Code", text:`For box fill, a duplex receptacle mounted in a box generally counts as:
+  {id:"Q027", cat:"Mechanical", text:`NM cable is crushed flat by a staple. Continuity still reads OK. Is that acceptable? What do you do?`, type:"written"},
+  {id:"Q028", cat:"Code", text:`Outdoor receptacles at a dwelling generally require what protection?
+
+A. AFCI only
+B. GFCI protection
+C. No special protection
+D. A 30-amp circuit only`, type:"mc"},
+  {id:"Q029", cat:"Mechanical", text:`A 3-way switch setup does not work after you rewired it. Describe a step-by-step way to check travelers and common terminals without randomly swapping wires.`, type:"written"},
+  {id:"Q030", cat:"Safety", text:`A standard circuit breaker is mainly there to protect people from electric shock the same way a GFCI does.
+
+A. True
+B. False`, type:"tf"},
+  {id:"Q031", cat:"Fundamentals", text:`On a standard 120-volt duplex receptacle, which slot is the neutral?
+
+A. The shorter slot
+B. The taller slot
+C. The round hole only
+D. Either slot if polarity is swapped`, type:"mc"},
+  {id:"Q032", cat:"Judgment", text:`If the general contractor is in a hurry, it is acceptable to skip testing or skip a required inspection.
+
+A. True
+B. False`, type:"tf"},
+  {id:"Q033", cat:"Scenario", text:`A circuit reads about 120 volts with no load, but the voltage falls a lot when you put a real load on it. Give at least three possible causes.`, type:"written"},
+  {id:"Q034", cat:"Code", text:`You have more than three current-carrying wires in a conduit, so you must adjust ampacity. The lugs are rated 75 C. Explain which temperature column you start from and why the lug rating matters.`, type:"written"},
+  {id:"Q035", cat:"Leadership", text:`List at least five things you check before you call for a residential or small commercial rough-in electrical inspection.`, type:"written"},
+  {id:"Q036", cat:"Code", text:`AFCI devices are mainly for arc faults that can start fires; GFCI devices are mainly to protect people from ground-fault shock.
+
+A. True
+B. False`, type:"tf"},
+  {id:"Q037", cat:"Mechanical", text:`List a safe sequence to replace a receptacle on an existing house circuit: kill power, prove dead, identify wires, land them, and retest.`, type:"written"},
+  {id:"Q038", cat:"Calculation", text:`A balanced 480-volt three-phase load is 25 kW at 0.85 power factor. Approximate the line current. Write the formula you use and your answer.`, type:"written"},
+  {id:"Q039", cat:"Mechanical", text:`How far from a box should NM be supported, and about how often along a run? What problems come from staples that are too tight or too loose?`, type:"written"},
+  {id:"Q040", cat:"Safety", text:`What is the main job of a standard branch-circuit breaker?
+
+A. To protect people from shock like a GFCI
+B. To protect the conductors and equipment from overcurrent
+C. To eliminate the need for equipment grounding
+D. To serve only as a light switch`, type:"mc"},
+  {id:"Q041", cat:"Code", text:`An open neutral on a multiwire branch circuit can put overvoltage on 120-volt loads and damage equipment.
+
+A. True
+B. False`, type:"tf"},
+  {id:"Q042", cat:"Scenario", text:`Both hots of a multiwire branch circuit are landed on the same phase (same leg) in the panel. What is the result?
+
+A. The neutral current cancels correctly
+B. The neutral can carry the sum of both loads and the wiring is wrong
+C. Nothing changes if the breaker is 2-pole
+D. The circuit becomes 240 V only`, type:"mc"},
+  {id:"Q043", cat:"Judgment", text:`For an apprentice, saying "I do not know - I need to ask" is a sign of weak skill and should be avoided.
+
+A. True
+B. False`, type:"tf"},
+  {id:"Q044", cat:"Code", text:`You may land two wires under a breaker lug even when the breaker is not listed for two conductors, as long as they fit.
+
+A. True
+B. False`, type:"tf"},
+  {id:"Q045", cat:"Code", text:`Is it allowed to store boxes and materials in the required working space in front of a panel?
+
+A. Yes, if they are temporary
+B. Yes, if the panel door can still open 90 degrees
+C. No, that working space must stay clear
+D. Only during rough-in`, type:"mc"},
+  {id:"Q046", cat:"Application", text:`A plug-in tester says the outlet is wired correctly. Explain what that test does and does not tell you about running a heavy continuous load.`, type:"written"},
+  {id:"Q047", cat:"Scenario", text:`You are replacing a receptacle and find hot and neutral reversed. List the steps from finding the problem through correcting it and proving it is fixed.`, type:"written"},
+  {id:"Q048", cat:"Scenario", text:`A motor runs about 10 minutes and then the breaker trips. It does not trip right at start-up. List the steps you would take to find the problem before you replace the breaker.`, type:"written"},
+  {id:"Q049", cat:"Fundamentals", text:`On a multiwire branch circuit, if one leg draws 12 A and the other draws 8 A, about how much current is in the neutral?
+
+A. 20 A (the sum)
+B. 12 A (the larger load)
+C. 4 A (the difference)
+D. 0 A always`, type:"mc"},
+  {id:"Q050", cat:"Code", text:`In a subpanel, the neutral bar should be bonded to the metal enclosure the same way it is at the service.
+
+A. True
+B. False`, type:"tf"},
+  {id:"Q051", cat:"Mechanical", text:`You open a junction box and find wirenuts that are loose or only half on. What do you do before closing the box, and what symptoms might loose splices have caused?`, type:"written"},
+  {id:"Q052", cat:"Code", text:`NM-B cable may be run exposed on the outside of a house in the weather without extra protection.
+
+A. True
+B. False`, type:"tf"},
+  {id:"Q053", cat:"Code", text:`When figuring box fill for a standard duplex receptacle in a device box, the device usually counts as:
 
 A. Zero volume allowances
 B. One volume allowance
-C. Two volume allowances based on the largest conductor connected to the device
-D. Four volume allowances`, type:"mc"},
-  {id:"Q027", cat:"Code", text:`NM-B cable may be used as exposed outdoor wiring on the exterior of a building without additional protection.
+C. Two volume allowances based on the largest conductor connected to it
+D. One allowance for each wire under the terminals`, type:"mc"},
+  {id:"Q054", cat:"Calculation", text:`A 120-volt heater draws 12 amps. Using Ohm's Law (R = V / I), what is the resistance in ohms? Write the formula and the number.`, type:"written"},
+  {id:"Q055", cat:"Code", text:`Under 2023 NEC 210.12, AFCI protection for 120-volt 15- and 20-amp circuits in dwellings applies:
+
+A. Only in bedrooms
+B. Only in kitchens
+C. To many listed living areas such as bedrooms, family rooms, dining rooms, hallways, and similar areas
+D. Only to outdoor receptacles`, type:"mc"},
+  {id:"Q056", cat:"Safety", text:`Working on live equipment without proper procedures is OK if the job will only take a few seconds.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q028", cat:"Mechanical", text:`Explain why forcing a device into an undersized box is unacceptable and what failure modes it can cause.`, type:"written"},
-  {id:"Q029", cat:"Code", text:`Termination temperature limitations often require using the 60°C or 75°C ampacity column even if conductor insulation is 90°C.
+  {id:"Q057", cat:"Scenario", text:`After a storm, some lights in the house are very bright, some are very dim, and several 120-volt appliances failed. What problem do you suspect first, and how do you start checking safely?`, type:"written"},
+  {id:"Q058", cat:"Judgment", text:`Your boss tells you to do something you believe is against the NEC or unsafe. What steps do you take?`, type:"written"},
+  {id:"Q059", cat:"Code", text:`Conductor insulation is rated 90 C, but terminations are rated 75 C. Which ampacity should you generally use for sizing?
 
-A. True in many practical terminations
-B. False always use 90°C
-C. Only for aluminum
-D. Only outdoors`, type:"mc"},
-  {id:"Q030", cat:"Mechanical", text:`You must join three 12 AWG and one 14 AWG under a wirenut. What must you verify about the connector and the make-up before energizing?`, type:"written"},
-  {id:"Q031", cat:"Application", text:`A plug-in receptacle tester shows “correct.” This proves:
+A. Always the 90 C column
+B. The 75 C column (or lower if required) because terminations limit the rating
+C. Always the 60 C column only
+D. Any column as long as the wire is copper`, type:"mc"},
+  {id:"Q060", cat:"Scenario", text:`A subpanel has the neutral bar bonded to the metal can, and the equipment grounds are on that same neutral bar. What is wrong, why is it dangerous, and how should it be wired instead?`, type:"written"},
+  {id:"Q061", cat:"Code", text:`A standby generator transfer switch or interlock must:
 
-A. The circuit can supply any continuous load safely
-B. Polarity and ground path presence under the tester’s limited checks — not full load capability
-C. AFCI is working
-D. Voltage drop is acceptable`, type:"mc"},
-  {id:"Q032", cat:"Mechanical", text:`Explain how to loop a conductor under a screw terminal (direction and reason) and what happens if insulation is left under the screw head.`, type:"written"},
-  {id:"Q033", cat:"Safety", text:`A standard circuit breaker is primarily intended to protect people from electric shock.
+A. Allow the generator to parallel with the utility at any time
+B. Prevent connecting the generator and the utility to the load at the same time
+C. Only switch the neutral
+D. Only be used on systems over 200 A`, type:"mc"},
+  {id:"Q062", cat:"Code", text:`What is the minimum depth of working space in front of a typical residential panel under Condition 1 (NEC 110.26)?
+
+A. 2 feet
+B. 30 inches
+C. 3 feet
+D. 4 feet`, type:"mc"},
+  {id:"Q063", cat:"Fundamentals", text:`On a normal 120/240-volt single-phase service, what voltage do you expect between the two hot legs?
+
+A. 120 volts
+B. 208 volts
+C. 240 volts
+D. 277 volts`, type:"mc"},
+  {id:"Q064", cat:"Judgment", text:`The general contractor tells you to turn power on to equipment that has not been inspected and is not finished. What do you do?`, type:"written"},
+  {id:"Q065", cat:"Mechanical", text:`A device box is too full for the wires and the device. What are acceptable ways to fix that before you energize?`, type:"written"},
+  {id:"Q066", cat:"Application", text:`A breaker trips under load. The next larger breaker fits the panel. Is upsizing the breaker the correct first fix?
+
+A. Yes, always
+B. Yes, if the wire is the same size
+C. No - find why it trips before changing the breaker size
+D. Yes, if the load is continuous`, type:"mc"},
+  {id:"Q067", cat:"Scenario", text:`You see many NM cables tightly bundled together for a long run in a ceiling. What is the concern, and what should be done?`, type:"written"},
+  {id:"Q068", cat:"Application", text:`If a receptacle reads about 120 volts with nothing plugged in, the circuit is proven OK for any equipment you might connect.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q034", cat:"Code", text:`A 15 A branch circuit for general lighting in a dwelling typically uses copper conductors of:
+  {id:"Q069", cat:"Mechanical", text:`A wall switch feels warm and the light sometimes works and sometimes does not. What connection problems do you look for at the switch and in the box first?`, type:"written"},
+  {id:"Q070", cat:"Code", text:`Do bathroom receptacles in dwellings require GFCI protection under the NEC?
+
+A. Yes
+B. No
+C. Only if the bathroom has a shower
+D. Only on 20-amp circuits`, type:"mc"},
+  {id:"Q071", cat:"Code", text:`In a dwelling kitchen under the 2023 NEC, GFCI protection is generally required for which receptacles?
+
+A. Only those within 6 feet of the sink
+B. Only 15-amp countertop receptacles
+C. All 125-volt through 250-volt receptacles supplied by branch circuits serving the kitchen
+D. Only the island receptacle`, type:"mc"},
+  {id:"Q072", cat:"Mechanical", text:`You need a conduit stub-up into a wall for a box. What do you watch for on height, plumb, and sharp edges so the cable is not cut?`, type:"written"},
+  {id:"Q073", cat:"Scenario", text:`A bathroom GFCI outlet trips over and over. The homeowner only wants a new GFCI installed. What should you do before or instead of only swapping the device, and why?`, type:"written"},
+  {id:"Q074", cat:"Mechanical", text:`What extra care do you take with aluminum terminations compared with copper (connectors, torque, oxide)?`, type:"written"},
+  {id:"Q075", cat:"Calculation", text:`A 120-volt circuit runs 16 amps. One-way length is 200 feet of copper. Pick a reasonable ohms-per-1000-feet value for the wire size you assume, calculate approximate voltage drop for the round trip, and give the drop as a percent of 120 volts.`, type:"written"},
+  {id:"Q076", cat:"Mechanical", text:`You are installing a new outdoor receptacle. Besides GFCI, list practical details: box type, cover, protecting the cable, and mounting height considerations.`, type:"written"},
+  {id:"Q077", cat:"Fundamentals", text:`What is the main difference between AC and DC?
+
+A. AC never produces heat
+B. AC periodically reverses direction; DC flows in one direction
+C. DC cannot be used in homes
+D. AC has no voltage`, type:"mc"},
+  {id:"Q078", cat:"Leadership", text:`Two electricians are arguing and work has stopped. How do you handle it so the job stays safe and moves again?`, type:"written"},
+  {id:"Q079", cat:"Mechanical", text:`The sharp edge of a metal box has cut into the cable jacket. What can go wrong, and how do you fix or prevent it?`, type:"written"},
+  {id:"Q080", cat:"Fundamentals", text:`Write Ohm's Law and a basic power formula you use in the field. Give one short example of when you would use each.`, type:"written"},
+  {id:"Q081", cat:"Code", text:`Name two places or situations where the 2023 NEC added or expanded GFCI requirements compared with older code cycles.`, type:"written"},
+  {id:"Q082", cat:"Leadership", text:`The architectural plan shows a wall that is not on the electrical plan. What should you do?
+
+A. Install to the electrical plan only and ignore the wall
+B. Install to the architectural plan only
+C. Stop and coordinate / get clarification before installing to a conflict
+D. Always follow whichever plan is newer by date stamp only`, type:"mc"},
+  {id:"Q083", cat:"Application", text:`A continuity test shows the wire is continuous end to end. What does that NOT prove?
+
+A. That there is a path for the test current
+B. That the wire will perform under full load without excess resistance or damage
+C. That the meter leads are connected
+D. That the circuit is not open at the moment of the test`, type:"mc"},
+  {id:"Q084", cat:"Mechanical", text:`When you fish cable through an outside wall with insulation and a vapor barrier, what can you damage, and why does that matter later?`, type:"written"},
+  {id:"Q085", cat:"Mechanical", text:`A device sticks out of the wall or sits too deep because the box is set wrong. What problems does that cause for covers, devices, and inspection?`, type:"written"},
+  {id:"Q086", cat:"Code", text:`If you increase feeder conductor size only to limit voltage drop, what usually happens to the equipment grounding conductor?
+
+A. It can stay the original size in all cases
+B. It is omitted on feeders
+C. It must generally be increased in proportion to the ungrounded conductors
+D. It must match the neutral size exactly`, type:"mc"},
+  {id:"Q087", cat:"Calculation", text:`A transformer is 480 V on the primary and 120/240 V on the secondary. The secondary load is 10 kVA. Ignoring losses, about how much current is on the primary? Show your reasoning.`, type:"written"},
+  {id:"Q088", cat:"Code", text:`After derating, a feeder looks too small. Explain how you decide if the installation can still be legal (what tables or rules you think about, terminations, and what info might still be missing).`, type:"written"},
+  {id:"Q089", cat:"Code", text:`In a dwelling subpanel, where should equipment grounding conductors land?
+
+A. On the neutral bar with the neutrals
+B. On a grounding bar bonded to the enclosure, with the neutral isolated from the can
+C. On either bar; they are interchangeable
+D. Only at the meter socket`, type:"mc"},
+  {id:"Q090", cat:"Judgment", text:`An apprentice wants to do a task that is beyond their skill and could hurt someone or damage the job. How do you handle it?`, type:"written"},
+  {id:"Q091", cat:"Mechanical", text:`You need to connect three 12 AWG wires and one 14 AWG wire under one wirenut. What do you check about the wirenut size and the make-up before turning power on?`, type:"written"},
+  {id:"Q092", cat:"Code", text:`For a typical 15-amp general lighting circuit in a house, what copper wire size is normally used?
 
 A. 14 AWG
 B. 12 AWG
 C. 10 AWG
 D. 8 AWG`, type:"mc"},
-  {id:"Q035", cat:"Leadership", text:`List at least five items you verify before calling a residential or small commercial rough-in electrical inspection.`, type:"written"},
-  {id:"Q036", cat:"Code", text:`AFCI devices primarily protect against arcing faults that can cause fires; GFCI devices primarily protect people from ground-fault shock.
+  {id:"Q093", cat:"Fundamentals", text:`Ohm's Law is written as:
 
-A. True
-B. False`, type:"tf"},
-  {id:"Q037", cat:"Application", text:`If a receptacle measures 120 V with no load, the circuit is proven adequate for any connected equipment.
-
-A. True
-B. False`, type:"tf"},
-  {id:"Q038", cat:"Judgment", text:`You discover a significant wiring error another electrician is trying to conceal before inspection. What do you do?`, type:"written"},
-  {id:"Q039", cat:"Mechanical", text:`When fishing NM through an insulated exterior wall, what construction features must you protect, and what damage creates long-term problems?`, type:"written"},
-  {id:"Q040", cat:"Scenario", text:`You measure ~120 V hot-to-ground and ~120 V neutral-to-ground but ~0 V hot-to-neutral at a receptacle. What does this indicate, and what is your next diagnostic step?`, type:"written"},
-  {id:"Q041", cat:"Code", text:`Name two distinct expansions or clarifications of GFCI requirements in the 2023 NEC (locations or equipment types).`, type:"written"},
-  {id:"Q042", cat:"Fundamentals", text:`On a standard 120/240 V single-phase service, voltage between the two ungrounded conductors is approximately:
-
-A. 120 V
-B. 208 V
-C. 240 V
-D. 277 V`, type:"mc"},
-  {id:"Q043", cat:"Code", text:`An open neutral on a multiwire branch circuit can subject 120 V loads to damaging overvoltage.
-
-A. True
-B. False`, type:"tf"},
-  {id:"Q044", cat:"Mechanical", text:`Describe a safe sequence for replacing a receptacle in an existing energized dwelling circuit (verify dead, identify conductors, terminate, retest).`, type:"written"},
-  {id:"Q045", cat:"Mechanical", text:`When pulling multiple conductors into EMT, what practices reduce insulation damage and jamming at the box or conduit body?`, type:"written"},
-  {id:"Q046", cat:"Scenario", text:`You find reversed polarity on an existing receptacle you were asked to replace. Describe steps from discovery through verification after correction.`, type:"written"},
-  {id:"Q047", cat:"Fundamentals", text:`A white insulated conductor is always the neutral and may never be re-identified for use as an ungrounded conductor.
-
-A. True
-B. False`, type:"tf"},
-  {id:"Q048", cat:"Code", text:`A 20 A general-purpose receptacle circuit in a dwelling typically uses copper conductors of:
-
-A. 14 AWG
-B. 12 AWG
-C. 10 AWG
-D. 8 AWG`, type:"mc"},
-  {id:"Q049", cat:"Scenario", text:`NM cables are tightly bundled together for a long distance in a ceiling. What concern does this raise and what should be done?`, type:"written"},
-  {id:"Q050", cat:"Code", text:`AFCI protection under 2023 NEC 210.12 applies broadly to many 120 V 15- and 20 A branch circuits in listed dwelling areas.
-
-A. True as a general rule for those listed areas
-B. Only bedrooms
-C. Only kitchens
-D. Only outdoors`, type:"mc"},
-  {id:"Q051", cat:"Mechanical", text:`Wire under a screw terminal should be arranged so tightening the screw tends to loosen and push the conductor out.
-
-A. True
-B. False`, type:"tf"},
-  {id:"Q052", cat:"Fundamentals", text:`State Ohm’s Law and Power relationships you use most in the field (formulas). Give one example of when each is useful.`, type:"written"},
-  {id:"Q053", cat:"Code", text:`More than three current-carrying conductors in a raceway or cable generally require ampacity adjustment.
-
-A. True
-B. False`, type:"tf"},
-  {id:"Q054", cat:"Code", text:`Outdoor receptacles at dwellings generally require GFCI protection under the 2023 NEC.
-
-A. True for the general requirement
-B. False
-C. Only above 20 A
-D. Only if weatherproof covers are missing`, type:"mc"},
-  {id:"Q055", cat:"Fundamentals", text:`Ohm’s Law relates voltage, current, and resistance as:
-
-A. V = I × R
+A. V = I x R
 B. V = I / R
 C. V = I + R
-D. V = I − R`, type:"mc"},
-  {id:"Q056", cat:"Application", text:`A plug-in tester reads correct. Explain what it does and does not prove about the circuit’s ability to serve a continuous load.`, type:"written"},
-  {id:"Q057", cat:"Code", text:`You applied adjustment factors for more than three current-carrying conductors. Terminations are 75°C. Explain which ampacity basis you start from and why termination rating matters.`, type:"written"},
-  {id:"Q058", cat:"Mechanical", text:`Describe weatherproofing and protection details for a new outdoor receptacle beyond GFCI (box, cover, cable protection, height considerations).`, type:"written"},
-  {id:"Q059", cat:"Code", text:`A grounding electrode conductor and an equipment grounding conductor serve the same purpose and are interchangeable by name.
+D. V = R / I`, type:"mc"},
+  {id:"Q094", cat:"Code", text:`Kitchen countertop receptacles in a dwelling are generally supplied by small-appliance branch circuits rated:
+
+A. 15 amps
+B. 20 amps
+C. 30 amps
+D. Any size if GFCI protected`, type:"mc"},
+  {id:"Q095", cat:"Fundamentals", text:`The equipment grounding conductor is meant to carry normal load current during everyday operation.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q060", cat:"Code", text:`Under the 2023 NEC, which best describes GFCI protection for dwelling-unit kitchen receptacles?
-
-A. Only receptacles within 6 ft of the sink
-B. All 125 V through 250 V receptacles supplied by branch circuits serving the kitchen
-C. Only 20 A countertop receptacles
-D. Only island and peninsula receptacles`, type:"mc"},
-  {id:"Q061", cat:"Fundamentals", text:`The equipment grounding conductor is designed to carry normal operating load current under normal conditions.
+  {id:"Q096", cat:"Code", text:`If more than three current-carrying conductors share a raceway, ampacity adjustment (derating) is generally required.
 
 A. True
 B. False`, type:"tf"},
-  {id:"Q062", cat:"Mechanical", text:`NM jacket is crushed by a staple. Continuity still reads. Is the installation acceptable? What do you do?`, type:"written"},
-  {id:"Q063", cat:"Code", text:`Double-tapping a breaker is acceptable whenever the wires fit under the lug, even if the breaker is not listed for two conductors.
+  {id:"Q097", cat:"Mechanical", text:`When pulling several wires into EMT, what habits help keep from skinning insulation or jamming at a connector or conduit body?`, type:"written"},
+  {id:"Q098", cat:"Code", text:`What color must an insulated equipment grounding conductor 6 AWG or smaller be?
 
-A. True
-B. False`, type:"tf"},
-  {id:"Q064", cat:"Leadership", text:`When architectural drawings show a wall not shown on electrical drawings, the lead should:
+A. White or gray only
+B. Green, or green with one or more yellow stripes
+C. Bare copper only (insulation not allowed)
+D. Black with green tape at both ends only`, type:"mc"},
+  {id:"Q099", cat:"Code", text:`For a typical 20-amp general receptacle circuit in a house, what copper wire size is normally used?
 
-A. Guess and install anyway
-B. Coordinate and clarify before installing to that condition
-C. Ignore architectural
-D. Always follow electrical only`, type:"mc"},
-  {id:"Q065", cat:"Fundamentals", text:`AC differs from DC primarily in that AC:
-
-A. Never produces heat
-B. Periodically reverses direction
-C. Cannot be transformed
-D. Has no voltage`, type:"mc"},
-  {id:"Q066", cat:"Scenario", text:`Both hots of a multiwire branch circuit are on the same phase in the panel. What is wrong and what is the danger?`, type:"written"},
-  {id:"Q067", cat:"Fundamentals", text:`Voltage drop depends only on distance and is independent of current and conductor resistance.
-
-A. True
-B. False`, type:"tf"},
-  {id:"Q068", cat:"Mechanical", text:`Device yoke is not flush / box is set too deep or too far forward. What problems does that create for covers, devices, and code compliance?`, type:"written"},
-  {id:"Q069", cat:"Code", text:`Equipment grounding conductors 6 AWG and smaller that are insulated must be identified by:
-
-A. White or gray
-B. Green or green with one or more yellow stripes
-C. Black only
-D. Any color if marked at terminations`, type:"mc"},
-  {id:"Q070", cat:"Safety", text:`After opening a breaker, it is acceptable to begin work without verifying absence of voltage if the schedule is labeled clearly.
-
-A. True
-B. False`, type:"tf"},
-  {id:"Q071", cat:"Mechanical", text:`Describe the difference in termination practice awareness for copper vs aluminum (general field awareness — oxide, torque, listed connectors).`, type:"written"},
-  {id:"Q072", cat:"Code", text:`When a feeder is increased in size solely for voltage drop, the equipment grounding conductor generally must be:
-
-A. Left the original size
-B. Increased proportionally (250.122(B) concept)
-C. Omitted
-D. Always the same size as the phase conductors`, type:"mc"},
-  {id:"Q073", cat:"Fundamentals", text:`In a properly wired multiwire branch circuit with unequal loads, neutral current is approximately:
-
-A. The sum of the two loads
-B. The difference between the two loads
-C. Always zero
-D. Always equal to the larger load`, type:"mc"},
-  {id:"Q074", cat:"Fundamentals", text:`The taller slot on a standard 120 V duplex receptacle is the:
-
-A. Hot
-B. Neutral
-C. Ground
-D. Traveler`, type:"mc"},
-  {id:"Q075", cat:"Judgment", text:`A GC tells you to energize equipment that has not been inspected and is incomplete. What do you do?`, type:"written"},
-  {id:"Q076", cat:"Code", text:`A multiwire branch circuit must have means to simultaneously disconnect all ungrounded conductors. This is primarily to:
-
-A. Reduce voltage drop
-B. Prevent a worker from working on one leg while the other remains energized via shared neutral/load paths
-C. Allow smaller neutrals
-D. Satisfy utility requirements only`, type:"mc"},
-  {id:"Q077", cat:"Code", text:`Bathroom receptacles in dwellings require GFCI protection.
-
-A. True under applicable NEC rules
-B. False
-C. Only if within 3 ft of the basin
-D. Only on 15 A circuits`, type:"mc"},
-  {id:"Q078", cat:"Mechanical", text:`Describe proper support of NM cable: distance from boxes and general support along the run, and why loose or overtight support is a problem.`, type:"written"},
-  {id:"Q079", cat:"Fundamentals", text:`Explain the difference between the grounded conductor (neutral) and the equipment grounding conductor. When does each carry current under normal vs fault conditions?`, type:"written"},
-  {id:"Q080", cat:"Scenario", text:`You are told to kill “the kitchen circuit” but multiple breakers are labeled kitchen. What do you do before working?`, type:"written"},
-  {id:"Q081", cat:"Code", text:`Working space depth in front of a typical residential 120/240 V panel (Condition 1) is generally:
-
-A. 2 ft
-B. 3 ft
-C. 4 ft
-D. No minimum if the door can open`, type:"mc"},
-  {id:"Q082", cat:"Judgment", text:`A supervisor directs work you believe is unsafe or against the NEC. What steps do you take?`, type:"written"},
-  {id:"Q083", cat:"Code", text:`In a subpanel, equipment grounding conductors should terminate on:
-
-A. The neutral bar
-B. A grounding bar bonded to the enclosure with the neutral isolated
-C. Either bar
-D. Only at the meter`, type:"mc"},
-  {id:"Q084", cat:"Code", text:`Storage of materials in the required working space in front of a panelboard is:
-
-A. Acceptable if temporary
-B. A violation of working-space rules
-C. Required for stock
-D. Only a problem during inspection`, type:"mc"},
-  {id:"Q085", cat:"Safety", text:`Working on energized equipment without proper procedures is acceptable if the task takes only a few seconds.
-
-A. True
-B. False`, type:"tf"},
-  {id:"Q086", cat:"Mechanical", text:`Explain how you would check for a high-resistance connection under load when voltage is normal at no load.`, type:"written"},
-  {id:"Q087", cat:"Safety", text:`Primary purpose of a standard overcurrent device (breaker) is to:
-
-A. Protect people from shock
-B. Protect conductors and equipment from overcurrent
-C. Eliminate the need for GFCI
-D. Serve as a disconnect only`, type:"mc"},
-  {id:"Q088", cat:"Mechanical", text:`How do you verify a voltage tester is working before and after proving a circuit de-energized? Why both checks?`, type:"written"},
-  {id:"Q089", cat:"Application", text:`Continuity is good end-to-end on a conductor. Explain why that is not sufficient proof the conductor is acceptable under load.`, type:"written"},
-  {id:"Q090", cat:"Mechanical", text:`Describe the correct way to strip NM-B so individual conductor insulation is not nicked, and why nicks are dangerous even if the circuit works initially.`, type:"written"},
-  {id:"Q091", cat:"Scenario", text:`A motor breaker trips after about 10 minutes of run time, not immediately. Outline a systematic troubleshooting approach before replacing the breaker.`, type:"written"},
-  {id:"Q092", cat:"Mechanical", text:`A conduit run needs a stub-up into a wall. Describe layout and bending considerations so the stub is plumb, correct height, and cable is not abraded.`, type:"written"},
-  {id:"Q093", cat:"Scenario", text:`Two ungrounded conductors of a multiwire branch circuit landed on the same phase (same leg) will typically:
-
-A. Cancel neutral current correctly
-B. Cause the neutral to carry the sum of the loads and is incorrect
-C. Improve balance
-D. Have no effect`, type:"mc"},
-  {id:"Q094", cat:"Code", text:`A generator transfer means must prevent interconnection of generator and utility sources.
-
-A. True
-B. False — parallel is always allowed
-C. Only for portable generators
-D. Only above 60 A`, type:"mc"},
-  {id:"Q095", cat:"Code", text:`A feeder looks undersized after adjustment factors. Explain how you verify whether the installation may still be permitted (tables/concepts, terminations, exceptions, missing info).`, type:"written"},
-  {id:"Q096", cat:"Application", text:`A customer wants the breaker upsized because it trips. Explain why that is usually the wrong first response and what you investigate instead.`, type:"written"},
-  {id:"Q097", cat:"Mechanical", text:`You open a junction box and find wirenuts that are loose or only partially engaged. What do you do before closing the box, and what symptoms might this have caused?`, type:"written"},
-  {id:"Q098", cat:"Scenario", text:`A circuit shows ~120 V open-circuit but voltage collapses under load. List at least three likely causes.`, type:"written"},
-  {id:"Q099", cat:"Leadership", text:`Two electricians are arguing and work has stopped. How do you restore safety, respect, and production?`, type:"written"},
-  {id:"Q100", cat:"Scenario", text:`A bathroom GFCI trips repeatedly. The customer says replace it only. What process do you follow and why?`, type:"written"}
+A. 14 AWG
+B. 12 AWG
+C. 10 AWG
+D. 8 AWG`, type:"mc"},
+  {id:"Q100", cat:"Mechanical", text:`How should you bend a wire under a screw terminal (which way does the loop go), and why? What is wrong with leaving insulation under the screw head?`, type:"written"}
 ];
 
 const DRAFT_KEY = 'kwl_placement_draft_v1';
