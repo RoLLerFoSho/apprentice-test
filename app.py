@@ -337,51 +337,88 @@ def build_results_pdf(applicant: dict, grade: dict) -> bytes:
     return out.getvalue()
 
 
-def send_results_email(applicant: dict, grade: dict, pdf_bytes: bytes) -> str:
-    """Send PDF to RESULTS_EMAIL_TO via Gmail. Returns status message."""
-    to_addr = (RESULTS_EMAIL_TO or "").strip()
-    user = (GMAIL_USER or "").strip()
-    password = (GMAIL_APP_PASSWORD or "").strip().replace(" ", "")
 
+def send_results_email(applicant: dict, grade: dict, pdf_bytes: bytes) -> str:
+    """Send PDF via Resend (HTTPS) preferred; SMTP Gmail fallback."""
+    to_addr = (RESULTS_EMAIL_TO or "").strip()
     if not to_addr:
         return "Email skipped: RESULTS_EMAIL_TO not set"
-    if not user or not password:
-        return "Email skipped: GMAIL_USER or GMAIL_APP_PASSWORD not set"
 
     name = applicant.get("name") or "Candidate"
-    level = grade.get("level") or "Unknown level"
+    level = grade.get("level") or "Unknown"
     score = grade.get("overall_score_percent", "-")
+    subject = f"Assessment: {name} - {level} ({score}%)"
+    body = (
+        f"Assessment results\\n\\n"
+        f"Candidate: {name}\\n"
+        f"Level: {level}\\n"
+        f"Score: {score}%\\n"
+        f"Hire recommendation: {grade.get('hire_recommendation', '-')}\\n\\n"
+        f"PDF report attached.\\n\\n"
+        f"- Key West Lights hiring system\\n"
+    )
+    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)[:40]
+    filename = f"Assessment_{safe_name}.pdf"
+
+    resend_key = (os.getenv("RESEND_API_KEY") or "").strip()
+    resend_from = (os.getenv("RESEND_FROM") or "").strip() or "Key West Lights <onboarding@resend.dev>"
+
+    # Preferred: Resend HTTPS API (works on Railway)
+    if resend_key:
+        import base64
+        import httpx as _httpx
+        payload = {
+            "from": resend_from,
+            "to": [to_addr],
+            "subject": subject,
+            "text": body,
+            "attachments": [
+                {
+                    "filename": filename,
+                    "content": base64.b64encode(pdf_bytes).decode("ascii"),
+                }
+            ],
+        }
+        headers = {
+            "Authorization": f"Bearer {resend_key}",
+            "Content-Type": "application/json",
+        }
+        with _httpx.Client(timeout=60.0) as client:
+            resp = client.post("https://api.resend.com/emails", headers=headers, json=payload)
+        if resp.status_code >= 400:
+            return f"Email failed (Resend {resp.status_code}): {resp.text[:300]}"
+        return f"Email sent to {to_addr} via Resend"
+
+    # Fallback: Gmail SMTP (often blocked on Railway)
+    user = (GMAIL_USER or "").strip()
+    password = (GMAIL_APP_PASSWORD or "").strip().replace(" ", "")
+    if not user or not password:
+        return (
+            "Email skipped: set RESEND_API_KEY (recommended on Railway) "
+            "or GMAIL_USER + GMAIL_APP_PASSWORD"
+        )
 
     msg = MIMEMultipart()
     msg["From"] = user
     msg["To"] = to_addr
-    msg["Subject"] = f"Placement Assessment: {name} - {level} ({score}%)"
-
-    body = f"""Electrical Skill-Level & Placement Assessment results
-
-Candidate: {name}
-Level: {level}
-Overall score: {score}%
-Hire recommendation: {grade.get('hire_recommendation', '-')}
-
-PDF report attached.
-
-- Key West Lights hiring system (automated)
-"""
+    msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
-
     part = MIMEBase("application", "pdf")
     part.set_payload(pdf_bytes)
     encoders.encode_base64(part)
-    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)[:40]
-    part.add_header("Content-Disposition", "attachment", filename=f"Placement_{safe_name}.pdf")
+    part.add_header("Content-Disposition", "attachment", filename=filename)
     msg.attach(part)
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as server:
-        server.login(user, password)
-        server.sendmail(user, [to_addr], msg.as_string())
-
-    return f"Email sent to {to_addr}"
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as server:
+            server.login(user, password)
+            server.sendmail(user, [to_addr], msg.as_string())
+        return f"Email sent to {to_addr} via Gmail SMTP"
+    except OSError as e:
+        return (
+            f"Email failed: {e}. "
+            "Railway often blocks SMTP. Add RESEND_API_KEY for HTTPS email."
+        )
 
 
 
