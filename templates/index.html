@@ -86,6 +86,11 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
     <div class="card">
       <div class="q-meta" id="qMeta"></div>
       <div class="q-text" id="qText"></div>
+      <div id="kwlMicRow" style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;">
+        <button type="button" id="kwlMicBtn" onclick="kwlToggleMic()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-weight:600;cursor:pointer;">🎤 Use microphone to answer</button>
+        <button type="button" id="kwlMicStopBtn" onclick="kwlStopMic()" style="display:none;background:#64748b;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-weight:600;cursor:pointer;">Stop</button>
+        <span id="kwlMicStatus" style="font-size:0.85rem;color:#64748b;"></span>
+      </div>
       <textarea id="answerBox" placeholder="Answer: letter for MC/T/F, or written work for explain/calc/scenario."></textarea>
       <div id="pauseOverlay" style="display:none;background:rgba(15,20,25,0.95);border:1px solid var(--warning);border-radius:8px;padding:20px;text-align:center;margin-bottom:12px;">
         <p style="font-size:1.1rem;margin-bottom:8px;"><strong>Test paused</strong></p>
