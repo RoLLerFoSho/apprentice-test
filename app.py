@@ -227,115 +227,130 @@ async def home(request: Request):
 
 
 
-def _safe(text, limit=500):
+
+def _safe(text, limit=2000):
     if text is None:
         return "-"
     s = str(text)
-    for a, b in [("—", "-"), ("–", "-"), ("‘", "'"), ("’", "'"), ("“", '"'), ("”", '"'), ("•", "*"), ("…", "..."), ("\r", " "), ("\n", " "), ("\t", " ")]:
+    for a, b in [
+        ("\u2014", "-"), ("\u2013", "-"), ("\u2018", "'"), ("\u2019", "'"),
+        ("\u201c", '"'), ("\u201d", '"'), ("\u2022", "*"), ("\u2026", "..."),
+        ("\r", " "), ("\t", " "),
+    ]:
         s = s.replace(a, b)
-    s = "".join(ch if 32 <= ord(ch) < 127 else "?" for ch in s).strip()
-    if not s:
-        return "-"
-    # force break long unbroken strings
-    out = []
-    for word in s.split(" "):
-        while len(word) > 60:
-            out.append(word[:60])
-            word = word[60:]
-        if word:
-            out.append(word)
-    return " ".join(out)[:limit]
+    # Keep newlines for paragraphs but normalize weird whitespace
+    s = "\n".join(line.strip() for line in s.replace("\r", "").split("\n"))
+    s = "".join(ch if (ch == "\n" or 32 <= ord(ch) < 127) else "?" for ch in s)
+    s = s.strip()
+    return s[:limit] if s else "-"
 
 
 def build_results_pdf(applicant: dict, grade: dict) -> bytes:
-    """Minimal PDF writer - avoids FPDF layout crashes."""
-    pdf = FPDF()
-    pdf.set_margins(15, 15, 15)
-    pdf.set_auto_page_break(True, 15)
+    """Clean, readable assessment PDF."""
+    pdf = FPDF(format="Letter", unit="mm")
+    pdf.set_auto_page_break(auto=True, margin=18)
     pdf.add_page()
-    pdf.set_font("Helvetica", size=11)
-    w = max(pdf.epw, 160)
+    pdf.set_left_margin(18)
+    pdf.set_right_margin(18)
+    pdf.set_xy(18, 18)
 
-    def line(txt, bold=False):
-        pdf.set_x(pdf.l_margin)
-        pdf.set_font("Helvetica", "B" if bold else "", 11 if bold else 10)
-        text = _safe(txt, 1000)
-        # write in chunks of ~90 chars to avoid width bugs
-        while text:
-            chunk = text[:90]
-            text = text[90:]
-            try:
-                pdf.multi_cell(w, 6, chunk)
-            except Exception:
-                try:
-                    pdf.cell(0, 6, chunk[:40], ln=True)
-                except Exception:
-                    pdf.ln(6)
-        pdf.set_x(pdf.l_margin)
+    page_w = pdf.w - 36  # usable width
 
-    line("Key West Lights - Assessment Report", bold=True)
-    line("Confidential hiring document")
-    line("")
-    line("Candidate: " + _safe(applicant.get("name"), 80), bold=True)
-    line("Years: " + _safe(applicant.get("years"), 40))
-    line("Residential: " + _safe(applicant.get("resYears"), 20) + "  Commercial: " + _safe(applicant.get("comYears"), 20))
-    line("Largest project: " + _safe(applicant.get("largestProject"), 100))
-    line("Largest crew: " + _safe(applicant.get("largestCrew"), 40))
-    line("J-Card: " + _safe(applicant.get("jcard"), 40))
-    line("")
-    line("LEVEL: " + _safe(grade.get("level"), 60), bold=True)
-    line("Score: " + _safe(str(grade.get("overall_score_percent", "-"))) + "%")
-    line("")
-    line("Level description:", bold=True)
-    line(grade.get("level_description") or "-")
-    line("")
-    line("Skill / strong suits:", bold=True)
-    line(grade.get("skill_level") or "-")
-    line("")
-    line("Pay grade band:", bold=True)
-    line(grade.get("pay_grade_band") or "-")
-    line("")
-    line("Project placement:", bold=True)
-    line(grade.get("project_placement") or "-")
-    line("")
-    line("Hire recommendation:", bold=True)
-    line(grade.get("hire_recommendation") or "-")
-    line("")
+    def h1(txt):
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.set_x(18)
+        pdf.multi_cell(page_w, 8, _safe(txt, 120))
+        pdf.ln(2)
+
+    def h2(txt):
+        pdf.ln(2)
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_x(18)
+        pdf.multi_cell(page_w, 7, _safe(txt, 120))
+        pdf.ln(1)
+
+    def body(txt):
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_x(18)
+        pdf.multi_cell(page_w, 5.5, _safe(txt, 2500))
+        pdf.ln(1)
+
+    def kv(label, value):
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.set_x(18)
+        pdf.multi_cell(page_w, 5.5, _safe(label, 80))
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_x(18)
+        pdf.multi_cell(page_w, 5.5, _safe(value, 2500))
+        pdf.ln(1.5)
+
+    def bullets(items):
+        pdf.set_font("Helvetica", "", 10)
+        if not items:
+            body("-")
+            return
+        for item in items:
+            pdf.set_x(18)
+            pdf.multi_cell(page_w, 5.5, "- " + _safe(item, 400))
+        pdf.ln(1)
+
+    h1("Key West Lights - Assessment Report")
+    body("Confidential hiring document")
+
+    h2("Candidate")
+    kv("Name", applicant.get("name") or "-")
+    kv("Years claimed", applicant.get("years") or "-")
+    kv("Residential years", applicant.get("resYears") or applicant.get("years") or "-")
+    kv("Commercial years", applicant.get("comYears") or "-")
+    kv("Largest project", applicant.get("largestProject") or "-")
+    kv("Largest crew", applicant.get("largestCrew") or "-")
+    kv("J-Card / License", applicant.get("jcard") or "-")
+
+    h2("Placement Result")
+    kv("Level", grade.get("level") or "-")
+    kv("Overall score", str(grade.get("overall_score_percent", "-")) + "%")
+    kv("Level description", grade.get("level_description") or "-")
+    kv("Skill / strong suits", grade.get("skill_level") or "-")
+    if grade.get("mechanical_aptitude"):
+        kv("Mechanical aptitude", grade.get("mechanical_aptitude"))
+    kv("Pay grade band", grade.get("pay_grade_band") or "-")
+    kv("Project placement", grade.get("project_placement") or "-")
+    kv("Hire recommendation", grade.get("hire_recommendation") or "-")
     if grade.get("experience_mismatch_note"):
-        line("Experience mismatch:", bold=True)
-        line(grade.get("experience_mismatch_note"))
-        line("")
-    line("Category scores:", bold=True)
+        kv("Experience mismatch", grade.get("experience_mismatch_note"))
+
+    h2("Category Scores")
     cat = grade.get("category_scores") or {}
     if cat:
+        lines = []
         for k, v in cat.items():
-            line("  " + _safe(str(k)) + ": " + _safe(str(v)) + "%")
+            lines.append(f"{k}: {v}%")
+        body("\n".join(lines))
     else:
-        line("  -")
-    line("")
-    line("Strengths:", bold=True)
-    for s in (grade.get("strengths") or ["-"]):
-        line("  - " + _safe(s, 200))
-    line("")
-    line("Weaknesses:", bold=True)
-    for s in (grade.get("weaknesses") or ["-"]):
-        line("  - " + _safe(s, 200))
+        body("-")
+
+    h2("Strengths")
+    bullets(grade.get("strengths") or [])
+
+    h2("Weaknesses / Development")
+    bullets(grade.get("weaknesses") or [])
+
     flags = grade.get("red_flags") or []
     if flags:
-        line("")
-        line("RED FLAGS:", bold=True)
-        for s in flags:
-            line("  ! " + _safe(s, 200))
-    line("")
-    line("Hiring manager summary:", bold=True)
-    line(grade.get("summary_for_hiring_manager") or "-")
-    line("")
-    line("Confidential - Key West Lights internal use only.")
+        h2("RED FLAGS")
+        bullets(flags)
+
+    h2("Hiring Manager Summary")
+    body(grade.get("summary_for_hiring_manager") or "-")
+
+    pdf.ln(6)
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.set_x(18)
+    pdf.multi_cell(page_w, 4, "Confidential - Key West Lights internal use only. Not for distribution without management approval.")
 
     out = BytesIO()
     pdf.output(out)
     return out.getvalue()
-
 
 
 def send_results_email(applicant: dict, grade: dict, pdf_bytes: bytes) -> str:
