@@ -228,7 +228,8 @@ async def home(request: Request):
 
 
 
-def _safe(text, limit=2000):
+
+def _safe(text, limit=2500):
     if text is None:
         return "-"
     s = str(text)
@@ -238,7 +239,6 @@ def _safe(text, limit=2000):
         ("\r", " "), ("\t", " "),
     ]:
         s = s.replace(a, b)
-    # Keep newlines for paragraphs but normalize weird whitespace
     s = "\n".join(line.strip() for line in s.replace("\r", "").split("\n"))
     s = "".join(ch if (ch == "\n" or 32 <= ord(ch) < 127) else "?" for ch in s)
     s = s.strip()
@@ -246,107 +246,163 @@ def _safe(text, limit=2000):
 
 
 def build_results_pdf(applicant: dict, grade: dict) -> bytes:
-    """Clean, readable assessment PDF."""
+    """PDF laid out to mirror the on-screen results report."""
     pdf = FPDF(format="Letter", unit="mm")
-    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.set_auto_page_break(auto=True, margin=16)
     pdf.add_page()
-    pdf.set_left_margin(18)
-    pdf.set_right_margin(18)
-    pdf.set_xy(18, 18)
+    left = 15
+    usable = pdf.w - 30
 
-    page_w = pdf.w - 36  # usable width
+    def set_x0():
+        pdf.set_x(left)
 
-    def h1(txt):
+    def rule():
+        pdf.set_draw_color(200, 210, 220)
+        pdf.set_line_width(0.3)
+        y = pdf.get_y()
+        pdf.line(left, y, left + usable, y)
+        pdf.ln(3)
+
+    def header_bar():
+        pdf.set_fill_color(30, 58, 95)  # dark blue like web
+        pdf.rect(0, 0, pdf.w, 28, "F")
+        pdf.set_xy(left, 8)
+        pdf.set_text_color(255, 255, 255)
         pdf.set_font("Helvetica", "B", 16)
-        pdf.set_x(18)
-        pdf.multi_cell(page_w, 8, _safe(txt, 120))
-        pdf.ln(2)
+        name = _safe(applicant.get("name") or "Candidate", 60)
+        pdf.cell(usable, 8, name, ln=True)
+        pdf.set_x(left)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.cell(usable, 5, "Live Grok AI Evaluation Complete  |  Key West Lights - Confidential", ln=True)
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_y(34)
 
-    def h2(txt):
+    def badge_row():
+        level = _safe(grade.get("level") or "-", 40)
+        score = str(grade.get("overall_score_percent", "-"))
+        pdf.set_font("Helvetica", "B", 11)
+        set_x0()
+        pdf.set_fill_color(37, 99, 235)
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(95, 9, f"  Level: {level}", border=0, fill=True)
+        pdf.set_fill_color(15, 118, 110)
+        pdf.cell(usable - 95, 9, f"  Overall Score: {score}%", border=0, fill=True, ln=True)
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(4)
+
+    def section_title(title):
         pdf.ln(2)
+        set_x0()
         pdf.set_font("Helvetica", "B", 12)
-        pdf.set_x(18)
-        pdf.multi_cell(page_w, 7, _safe(txt, 120))
-        pdf.ln(1)
+        pdf.set_text_color(30, 58, 95)
+        pdf.cell(usable, 7, _safe(title, 80), ln=True)
+        pdf.set_text_color(0, 0, 0)
+        rule()
 
-    def body(txt):
-        pdf.set_font("Helvetica", "", 10)
-        pdf.set_x(18)
-        pdf.multi_cell(page_w, 5.5, _safe(txt, 2500))
-        pdf.ln(1)
-
-    def kv(label, value):
+    def label(txt):
+        set_x0()
         pdf.set_font("Helvetica", "B", 10)
-        pdf.set_x(18)
-        pdf.multi_cell(page_w, 5.5, _safe(label, 80))
-        pdf.set_font("Helvetica", "", 10)
-        pdf.set_x(18)
-        pdf.multi_cell(page_w, 5.5, _safe(value, 2500))
-        pdf.ln(1.5)
+        pdf.multi_cell(usable, 5, _safe(txt, 100))
 
-    def bullets(items):
+    def para(txt):
+        set_x0()
         pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(usable, 5, _safe(txt, 2500))
+        pdf.ln(1)
+
+    def bullets(items, color_rgb=None):
         if not items:
-            body("-")
+            para("-")
             return
         for item in items:
-            pdf.set_x(18)
-            pdf.multi_cell(page_w, 5.5, "- " + _safe(item, 400))
+            set_x0()
+            if color_rgb:
+                pdf.set_text_color(*color_rgb)
+            pdf.set_font("Helvetica", "", 10)
+            pdf.multi_cell(usable, 5, "* " + _safe(item, 500))
+        pdf.set_text_color(0, 0, 0)
         pdf.ln(1)
 
-    h1("Key West Lights - Assessment Report")
-    body("Confidential hiring document")
+    # --- Build report matching web layout ---
+    header_bar()
+    badge_row()
 
-    h2("Candidate")
-    kv("Name", applicant.get("name") or "-")
-    kv("Years claimed", applicant.get("years") or "-")
-    kv("Residential years", applicant.get("resYears") or applicant.get("years") or "-")
-    kv("Commercial years", applicant.get("comYears") or "-")
-    kv("Largest project", applicant.get("largestProject") or "-")
-    kv("Largest crew", applicant.get("largestCrew") or "-")
-    kv("J-Card / License", applicant.get("jcard") or "-")
-
-    h2("Placement Result")
-    kv("Level", grade.get("level") or "-")
-    kv("Overall score", str(grade.get("overall_score_percent", "-")) + "%")
-    kv("Level description", grade.get("level_description") or "-")
-    kv("Skill / strong suits", grade.get("skill_level") or "-")
-    if grade.get("mechanical_aptitude"):
-        kv("Mechanical aptitude", grade.get("mechanical_aptitude"))
-    kv("Pay grade band", grade.get("pay_grade_band") or "-")
-    kv("Project placement", grade.get("project_placement") or "-")
-    kv("Hire recommendation", grade.get("hire_recommendation") or "-")
+    section_title("Recommended Classification")
+    label("Level / Description")
+    para(grade.get("level_description") or "-")
+    label("Suggested Pay Grade Band")
+    para(grade.get("pay_grade_band") or "-")
+    label("Recommended Project Placement")
+    para(grade.get("project_placement") or "-")
     if grade.get("experience_mismatch_note"):
-        kv("Experience mismatch", grade.get("experience_mismatch_note"))
+        label("Experience note")
+        para(grade.get("experience_mismatch_note"))
 
-    h2("Category Scores")
+    section_title("Category Scores")
     cat = grade.get("category_scores") or {}
     if cat:
-        lines = []
+        # two-column style list
+        pdf.set_font("Helvetica", "", 10)
         for k, v in cat.items():
-            lines.append(f"{k}: {v}%")
-        body("\n".join(lines))
+            set_x0()
+            key = _safe(str(k).replace("_", " ").title(), 40)
+            pdf.cell(usable * 0.7, 6, key, border=0)
+            pdf.cell(usable * 0.3, 6, f"{v}%", border=0, ln=True, align="R")
+        pdf.ln(2)
     else:
-        body("-")
+        para("-")
 
-    h2("Strengths")
+    section_title("Hire Recommendation")
+    para(grade.get("hire_recommendation") or "-")
+    if grade.get("skill_level"):
+        label("Strong suits")
+        para(grade.get("skill_level"))
+
+    section_title("Strengths")
     bullets(grade.get("strengths") or [])
 
-    h2("Weaknesses / Development")
+    section_title("Areas for Development")
     bullets(grade.get("weaknesses") or [])
 
     flags = grade.get("red_flags") or []
     if flags:
-        h2("RED FLAGS")
-        bullets(flags)
+        section_title("Red Flags")
+        # light red text
+        bullets(flags, color_rgb=(153, 27, 27))
 
-    h2("Hiring Manager Summary")
-    body(grade.get("summary_for_hiring_manager") or "-")
+    section_title("Hiring Manager Summary")
+    para(grade.get("summary_for_hiring_manager") or "-")
 
-    pdf.ln(6)
+    section_title("Applicant Profile")
+    pdf.set_font("Helvetica", "", 10)
+    profile_lines = [
+        f"Name: {_safe(applicant.get('name'), 60)}",
+        f"Years claimed: {_safe(applicant.get('years'), 20)}",
+        f"Residential: {_safe(applicant.get('resYears'), 20)}  |  Commercial: {_safe(applicant.get('comYears'), 20)}",
+        f"Largest project: {_safe(applicant.get('largestProject'), 80)}",
+        f"Largest crew: {_safe(applicant.get('largestCrew'), 40)}",
+        f"J-Card / License: {_safe(applicant.get('jcard'), 40)}",
+        f"Bilingual: {_safe(applicant.get('bilingual'), 20)}",
+    ]
+    for line in profile_lines:
+        set_x0()
+        pdf.multi_cell(usable, 5, line)
+
+    meta = grade.get("_meta") or {}
+    pdf.ln(4)
+    set_x0()
     pdf.set_font("Helvetica", "I", 8)
-    pdf.set_x(18)
-    pdf.multi_cell(page_w, 4, "Confidential - Key West Lights internal use only. Not for distribution without management approval.")
+    pdf.set_text_color(100, 100, 100)
+    pdf.multi_cell(
+        usable,
+        4,
+        _safe(
+            f"Graded by: {meta.get('model', 'Grok')} at {meta.get('graded_at', '-')}. "
+            "Confidential - Key West Lights internal use only.",
+            200,
+        ),
+    )
+    pdf.set_text_color(0, 0, 0)
 
     out = BytesIO()
     pdf.output(out)
