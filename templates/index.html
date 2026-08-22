@@ -63,9 +63,9 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
       <div id="resumeBox" style="display:none;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;">
         <p style="margin-bottom:8px;"><strong>Saved progress found.</strong> <span id="resumeDetail"></span></p>
         <button class="btn btn-primary btn-block" onclick="resumeTest()">Resume where I left off</button>
-        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="startNewTest()">Clear All Fields & Start New Test</button>
+        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="clearAllFieldsApprentice()">Clear All Fields & Start New Test</button>
       </div>
-      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startNewTest()">Clear All Fields & Start New Test</button>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="clearAllFieldsApprentice()">Clear All Fields & Start New Test</button>
       <button class="btn btn-secondary btn-block" style="margin-top:8px;display:none;" id="btnStartOnly" onclick="startTest()">Continue without clearing</button>
       
     </div>
@@ -82,6 +82,8 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
         <button class="btn btn-primary" onclick="resumeFromPause()">Resume Test</button>
       </div>
       <div class="nav-btns">
+        <button type="button" class="btn" id="btnPause" onclick="pauseTest()" style="background:#92400e;color:#fff;border:none;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;">Pause (break)</button>
+
         <button class="btn btn-secondary" id="btnPrev" onclick="prevQ()">← Previous</button>
         <button class="btn btn-secondary" id="btnPause" onclick="pauseTest()" style="background:#92400e;">Pause</button>
         <button class="btn btn-primary" id="btnNext" onclick="nextQ()">Next →</button>
@@ -470,29 +472,40 @@ function checkResumeOnLoad() {
   }
 }
 
-function startNewTest() {
-  clearDraft();
+function clearAllFieldsApprentice() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('kwl_') === 0) keys.push(k);
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
   answers = {};
   questionTimes = {};
   currentQ = 0;
   questionShownAt = null;
   paused = false;
+  applicantInfo = {};
   ['name','years','claimed','experience'].forEach(function(id) {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  applicantInfo = {};
-  const nameEl = document.getElementById('name');
-  const name = nameEl ? nameEl.value.trim() : '';
-  // Stay on info screen so they type new name cleanly
-  document.getElementById('screen-test').classList.remove('active');
-  document.getElementById('screen-info').classList.add('active');
+  const ab = document.getElementById('answerBox');
+  if (ab) ab.value = '';
   const po = document.getElementById('pauseOverlay');
   if (po) po.style.display = 'none';
   const rb = document.getElementById('resumeBox');
   if (rb) rb.style.display = 'none';
-  alert('All saved answers and fields cleared. Enter the new candidate name and click Start Assessment.');
+  document.getElementById('screen-test').classList.remove('active');
+  if (document.getElementById('screen-results')) document.getElementById('screen-results').classList.remove('active');
+  document.getElementById('screen-info').classList.add('active');
+  alert('All fields and saved answers cleared. Enter the new candidate and Start Assessment.');
+  window.scrollTo(0,0);
 }
+function startNewTest() { clearAllFieldsApprentice(); }
+
 let paused = false;
 function pauseTest() {
   if (paused) return;
