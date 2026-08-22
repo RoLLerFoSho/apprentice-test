@@ -40,7 +40,18 @@ textarea { min-height:110px; resize:vertical; }
 .rec-box.nohire { border-left-color:var(--danger); }
 .red-flag { background:rgba(239,68,68,0.12); border:1px solid var(--danger); border-radius:8px; padding:10px 12px; margin:6px 0; color:#fca5a5; }
 ul { padding-left:18px; } li { margin-bottom:5px; }
-</style>
+
+    .mic-row { display:flex; gap:8px; align-items:center; margin:8px 0 4px 0; flex-wrap:wrap; }
+    .btn-mic {
+      background:#7c3aed; color:#fff; border:none; border-radius:8px;
+      padding:10px 14px; font-weight:600; cursor:pointer; font-size:0.95rem;
+    }
+    .btn-mic.listening { background:#dc2626; animation: pulseMic 1s infinite; }
+    .btn-mic:disabled { opacity:0.5; cursor:not-allowed; }
+    @keyframes pulseMic { 50% { opacity: 0.75; } }
+    .mic-status { font-size:0.85rem; color:var(--muted, #94a3b8); }
+
+  </style>
 </head>
 <body>
 <div class="container">
@@ -540,6 +551,124 @@ document.addEventListener('DOMContentLoaded', checkResumeOnLoad);
 
 let currentQ=0, answers={}, applicantInfo={}, questionTimes={}, questionShownAt=null;
 function startTestPrefilled(){ alert("Sample fill disabled."); }
+
+    // ----- Speech-to-text (Chrome / Edge) -----
+    let __kwlRecognition = null;
+    let __kwlListening = false;
+
+    function kwlSpeechSupported() {
+      return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    }
+
+    function kwlGetAnswerEl() {
+      return document.getElementById('answer') || document.getElementById('answerBox') || document.querySelector('#questionsContainer textarea') || document.querySelector('textarea#answer');
+    }
+
+    function kwlEnsureMicUI() {
+      const ta = kwlGetAnswerEl();
+      if (!ta) return;
+      if (document.getElementById('kwlMicRow')) return;
+      const row = document.createElement('div');
+      row.id = 'kwlMicRow';
+      row.className = 'mic-row';
+      row.innerHTML =
+        '<button type="button" class="btn-mic" id="kwlMicBtn" onclick="kwlToggleMic()">🎤 Speak answer</button>' +
+        '<button type="button" class="btn-mic" id="kwlMicStopBtn" onclick="kwlStopMic()" style="display:none;background:#64748b;">Stop</button>' +
+        '<span class="mic-status" id="kwlMicStatus"></span>';
+      ta.parentNode.insertBefore(row, ta);
+      if (!kwlSpeechSupported()) {
+        document.getElementById('kwlMicBtn').disabled = true;
+        document.getElementById('kwlMicStatus').textContent = 'Speech not supported in this browser. Use Chrome or Edge.';
+      }
+    }
+
+    function kwlToggleMic() {
+      if (__kwlListening) { kwlStopMic(); return; }
+      kwlStartMic();
+    }
+
+    function kwlStartMic() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        alert('Speech-to-text needs Chrome or Edge on this computer.');
+        return;
+      }
+      const ta = kwlGetAnswerEl();
+      if (!ta) {
+        alert('Open a question answer box first.');
+        return;
+      }
+      try {
+        if (__kwlRecognition) {
+          try { __kwlRecognition.stop(); } catch (e) {}
+        }
+        __kwlRecognition = new SR();
+        __kwlRecognition.continuous = true;
+        __kwlRecognition.interimResults = true;
+        __kwlRecognition.lang = 'en-US';
+
+        let finalChunk = '';
+        __kwlRecognition.onresult = function(event) {
+          let interim = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const t = event.results[i][0].transcript;
+            if (event.results[i].isFinal) finalChunk += t + ' ';
+            else interim += t;
+          }
+          // Append finalized speech; show interim in status
+          if (finalChunk) {
+            const needsSpace = ta.value && !ta.value.endsWith(' ') && !ta.value.endsWith('\\n');
+            ta.value = (ta.value || '') + (needsSpace ? ' ' : '') + finalChunk.trim() + ' ';
+            finalChunk = '';
+            // trigger save handlers
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+            if (typeof saveCurrentAnswer === 'function') saveCurrentAnswer();
+            if (typeof saveDraft === 'function') saveDraft();
+          }
+          const st = document.getElementById('kwlMicStatus');
+          if (st) st.textContent = interim ? ('Listening: ' + interim) : 'Listening… speak now';
+        };
+
+        __kwlRecognition.onerror = function(ev) {
+          const st = document.getElementById('kwlMicStatus');
+          if (st) st.textContent = 'Mic error: ' + (ev.error || 'unknown') + '. Check browser mic permission.';
+          kwlStopMic();
+        };
+        __kwlRecognition.onend = function() {
+          // If user still wants listening, some browsers end automatically — restart if flag set
+          if (__kwlListening) {
+            try { __kwlRecognition.start(); } catch (e) { kwlStopMic(); }
+          }
+        };
+
+        __kwlRecognition.start();
+        __kwlListening = true;
+        const btn = document.getElementById('kwlMicBtn');
+        const stop = document.getElementById('kwlMicStopBtn');
+        if (btn) { btn.classList.add('listening'); btn.textContent = '🎤 Listening…'; }
+        if (stop) stop.style.display = 'inline-block';
+        const st = document.getElementById('kwlMicStatus');
+        if (st) st.textContent = 'Listening… allow microphone if the browser asks.';
+      } catch (e) {
+        alert('Could not start microphone: ' + e.message);
+        kwlStopMic();
+      }
+    }
+
+    function kwlStopMic() {
+      __kwlListening = false;
+      try { if (__kwlRecognition) __kwlRecognition.stop(); } catch (e) {}
+      __kwlRecognition = null;
+      const btn = document.getElementById('kwlMicBtn');
+      const stop = document.getElementById('kwlMicStopBtn');
+      if (btn) { btn.classList.remove('listening'); btn.textContent = '🎤 Speak answer'; }
+      if (stop) stop.style.display = 'none';
+      const st = document.getElementById('kwlMicStatus');
+      if (st) st.textContent = 'Stopped. You can edit the text before going to the next question.';
+      if (typeof saveCurrentAnswer === 'function') saveCurrentAnswer();
+    }
+
+
 function startTest(){
   const name=document.getElementById('name').value.trim();
   if(!name){ alert('Enter name'); return; }
@@ -566,11 +695,11 @@ function showQuestion(){
   document.getElementById('btnPrev').style.display=currentQ===0?'none':'inline-block';
   document.getElementById('btnNext').style.display=currentQ===QUESTIONS.length-1?'none':'inline-block';
   document.getElementById('btnSubmit').style.display=currentQ===QUESTIONS.length-1?'block':'none';
-  if (!paused) questionShownAt=Date.now();
+  if (!paused) questionShownAt=Date.now(); setTimeout(kwlEnsureMicUI, 30);
 }
 function saveCurrentAnswer(){ answers[QUESTIONS[currentQ].id]=document.getElementById('answerBox').value; saveDraft(); }
-function nextQ(){ markQuestionTime(); saveCurrentAnswer(); if(currentQ<QUESTIONS.length-1){ currentQ++; showQuestion(); } }
-function prevQ(){ markQuestionTime(); saveCurrentAnswer(); if(currentQ>0){ currentQ--; showQuestion(); } }
+function nextQ(){ if(typeof kwlStopMic==="function")kwlStopMic();  markQuestionTime(); saveCurrentAnswer(); if(currentQ<QUESTIONS.length-1){ currentQ++; showQuestion(); } }
+function prevQ(){ if(typeof kwlStopMic==="function")kwlStopMic();  markQuestionTime(); saveCurrentAnswer(); if(currentQ>0){ currentQ--; showQuestion(); } }
 function submitTest(){
   if(!confirm('Submit for Grok AI placement?')) return;
   markQuestionTime();
