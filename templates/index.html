@@ -63,9 +63,9 @@ ul { padding-left:18px; } li { margin-bottom:5px; }
       <div id="resumeBox" style="display:none;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;">
         <p style="margin-bottom:8px;"><strong>Saved progress found.</strong> <span id="resumeDetail"></span></p>
         <button class="btn btn-primary btn-block" onclick="resumeTest()">Resume where I left off</button>
-        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="startNewTest()">Start New Test (clear saved answers)</button>
+        <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="startNewTest()">Clear All Fields & Start New Test</button>
       </div>
-      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startNewTest()">Start New Test (clear saved answers)</button>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startNewTest()">Clear All Fields & Start New Test</button>
       <button class="btn btn-secondary btn-block" style="margin-top:8px;display:none;" id="btnStartOnly" onclick="startTest()">Continue without clearing</button>
       
     </div>
@@ -477,19 +477,21 @@ function startNewTest() {
   currentQ = 0;
   questionShownAt = null;
   paused = false;
-  const name = document.getElementById('name').value.trim();
-  if (!name) { alert('Enter name first'); return; }
-  applicantInfo = {
-    name,
-    years: document.getElementById('years').value.trim(),
-    claimed: document.getElementById('claimed') ? document.getElementById('claimed').value.trim() : '',
-    experience: document.getElementById('experience').value.trim()
-  };
-  document.getElementById('screen-info').classList.remove('active');
-  document.getElementById('screen-test').classList.add('active');
+  ['name','years','claimed','experience'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  applicantInfo = {};
+  const nameEl = document.getElementById('name');
+  const name = nameEl ? nameEl.value.trim() : '';
+  // Stay on info screen so they type new name cleanly
+  document.getElementById('screen-test').classList.remove('active');
+  document.getElementById('screen-info').classList.add('active');
   const po = document.getElementById('pauseOverlay');
   if (po) po.style.display = 'none';
-  showQuestion();
+  const rb = document.getElementById('resumeBox');
+  if (rb) rb.style.display = 'none';
+  alert('All saved answers and fields cleared. Enter the new candidate name and click Start Assessment.');
 }
 let paused = false;
 function pauseTest() {
